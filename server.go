@@ -3,7 +3,8 @@
 // license that can be found in the LICENSE file.
 
 /*
-	Package rpc provides access to the exported methods of an object across a
+	Package rrpc is a fork of standard library net/rpc, which has been frozen.
+        It provides access to the exported methods of an object across a
 	network or other I/O connection.  A server registers an object, making it visible
 	as a service with the name of the type of the object.  After registration, exported
 	methods of the object will be accessible remotely.  A server may register multiple
@@ -84,8 +85,8 @@
 	The server calls (for HTTP service):
 
 		arith := new(Arith)
-		rpc.Register(arith)
-		rpc.HandleHTTP()
+		rrpc.Register(arith)
+		rrpc.HandleHTTP()
 		l, e := net.Listen("tcp", ":1234")
 		if e != nil {
 			log.Fatal("listen error:", e)
@@ -95,7 +96,7 @@
 	At this point, clients can see a service "Arith" with methods "Arith.Multiply" and
 	"Arith.Divide".  To invoke one, a client first dials the server:
 
-		client, err := rpc.DialHTTP("tcp", serverAddress + ":1234")
+		client, err := rrpc.DialHTTP("tcp", serverAddress + ":1234")
 		if err != nil {
 			log.Fatal("dialing:", err)
 		}
@@ -122,7 +123,11 @@
 	A server implementation will often provide a simple, type-safe wrapper for the
 	client.
 
-	The net/rpc package is frozen and is not accepting new features.
+	rrpc allows you change to use different encoder/decoder. 
+        The default is Gob encoder/decoder, a JSON based encoder/decoder is provided.
+
+        rrpc also supports bidirectional rpc over the same connection, 
+        where there are servers active at both ends of connection and serving clients at other end.
 */
 package rrpc
 
