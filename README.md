@@ -13,5 +13,5 @@ This is a fork of the originial Go net/rpc code for some rework/enhancements:
     * There are both client and server at each end of a connection.
 
 
-[godoc](https://github.com/yglcode/rrpc/blob/main/godoc/doc.html).
+[godoc](./godoc/doc.html).
 
