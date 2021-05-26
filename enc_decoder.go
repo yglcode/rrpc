@@ -38,5 +38,21 @@ func (jc jsonEncDecoder) NewEncoder(w io.Writer) Encoder {
 	return json.NewEncoder(w)
 }
 func (jc jsonEncDecoder) NewDecoder(r io.Reader) Decoder {
-	return json.NewDecoder(r)
+	dec := &DiscardJsonDecoder{json.NewDecoder(r)}
+	dec.DisallowUnknownFields()
+	return dec
+}
+
+// Following convention of gob decoder, if passed in v==nil,
+// discard next value decoded
+type DiscardJsonDecoder struct {
+	*json.Decoder
+}
+
+func (djd *DiscardJsonDecoder) Decode(v interface{}) error {
+	var discard interface{}
+	if v == nil {
+		v = &discard
+	}
+	return djd.Decoder.Decode(v)
 }
