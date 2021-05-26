@@ -2,55 +2,29 @@ package rrpc
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"strings"
-	"sync"
 	"testing"
 )
 
-var (
-	jsonServer     *Server
-	jsonServerAddr string
-	jOnce          sync.Once
-)
+// TestInProcRPC tests using in-memory pipe as connection
+func TestInProcJsonRPC(t *testing.T) {
+	newServer := NewServer()
+	newServer.Register(new(Arith))
+	newServer.Register(new(Embed))
+	newServer.RegisterName("net.rpc.Arith", new(Arith))
+	newServer.RegisterName("newServer.Arith", new(Arith))
 
-func startJsonServer() {
-	jsonServer = NewServer()
-	jsonServer.Register(new(Arith))
-	jsonServer.Register(new(Embed))
-	jsonServer.RegisterName("net.rpc.Arith", new(Arith))
-	jsonServer.RegisterName("jsonServer.Arith", new(Arith))
+	cliConn, srvConn := net.Pipe()
+	defer cliConn.Close()
+	go newServer.ServeConn(srvConn, JsonEncDecoder)
 
-	var l net.Listener
-	l, jsonServerAddr = listenTCP()
-	log.Println("NewJsonServer test JSON RPC server listening on", jsonServerAddr)
-	acpt := NewAcceptor(func(conn net.Conn) {
-		jsonServer.ServeConn(conn, JsonEncDecoder)
-	})
-	go acpt.Accept(l)
-}
-
-// TestJsonRPC test RPC connections using JsonEncDecoder
-func TestJsonRPC(t *testing.T) {
-	jOnce.Do(startJsonServer)
-	testJsonRPC(t, jsonServerAddr)
-}
-
-func testJsonRPC(t *testing.T, addr string) {
-	dialer := Dialer(func(conn net.Conn) *Client {
-		return NewClient(conn, JsonEncDecoder)
-	})
-	client, err := dialer.Dial("tcp", addr)
-	if err != nil {
-		t.Fatal("dialing", err)
-	}
-	defer client.Close()
+	client := NewClient(cliConn, JsonEncDecoder)
 
 	// Synchronous calls
 	args := &Args{7, 8}
 	reply := new(Reply)
-	err = client.Call("Arith.Add", args, reply)
+	err := client.Call("Arith.Add", args, reply)
 	if err != nil {
 		t.Errorf("Add: expected no error but got string %q", err.Error())
 	}
@@ -130,7 +104,7 @@ func testJsonRPC(t *testing.T, addr string) {
 	if err == nil {
 		t.Error("expected error calling Arith.Add with wrong arg type")
 	} else if !strings.Contains(err.Error(), "unknown") {
-		t.Error("expected error about type; got", err)
+		t.Error("expected error about unknown; got", err)
 	}
 
 	// Non-struct argument

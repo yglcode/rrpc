@@ -434,7 +434,7 @@ func (codec *CodecEmulator) ReadBody(argv interface{}) error {
 	if codec.args == nil {
 		return io.ErrUnexpectedEOF
 	}
-	if argv!=nil {
+	if argv != nil {
 		//if passed in nil, discard the value
 		*(argv.(*Args)) = *codec.args
 	}
