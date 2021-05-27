@@ -123,10 +123,10 @@
 	A server implementation will often provide a simple, type-safe wrapper for the
 	client.
 
-	rrpc allows you change to use different encoder/decoder. 
+	rrpc allows you change to use different encoder/decoder.
         The default is Gob encoder/decoder, a JSON based encoder/decoder is provided.
 
-        rrpc also supports bidirectional rpc over the same connection, 
+        rrpc also supports bidirectional rpc over the same connection,
         where there are servers active at both ends of connection and serving clients at other end.
 */
 package rrpc
@@ -136,9 +136,17 @@ import (
 	"go/token"
 	"io"
 	"log"
+	"net"
+	"net/http"
 	"reflect"
 	"strings"
 	"sync"
+)
+
+const (
+	// Defaults used by HandleHTTP
+	DefaultRPCPath   = "/_goRPC_"
+	DefaultDebugPath = "/debug/rpc"
 )
 
 // Precompute the reflect type for error. Can't use error directly
@@ -615,4 +623,79 @@ func ServeCodec(codec Codec) {
 // It does not close the codec upon completion.
 func ServeRequest(codec Codec) error {
 	return DefaultServer.ServeRequest(codec)
+}
+
+// Accept accepts connections on the listener and serves requests
+// for each incoming connection. Accept blocks until the listener
+// returns a non-nil error. The caller typically invokes Accept in a
+// go statement.
+func (server *Server) Accept(lis net.Listener, encdec ...EncDecoder) {
+	for {
+		conn, err := lis.Accept()
+		if err != nil {
+			log.Print("rpc.Serve: accept:", err.Error())
+			return
+		}
+		go server.ServeConn(conn, encdec...)
+	}
+}
+
+// Accept accepts connections on the listener and serves requests
+// to DefaultServer for each incoming connection.
+// Accept blocks; the caller typically invokes it in a go statement.
+func Accept(lis net.Listener, encdec ...EncDecoder) { DefaultServer.Accept(lis, encdec...) }
+
+// Can connect to RPC service using HTTP CONNECT to rpcPath.
+var connected = "200 Connected to Go RPC"
+
+// ServeHTTP implements an http.Handler that answers RPC requests.
+func (server *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if conn, err := hijackHTTPConn(w, req); err == nil {
+		server.ServeConn(conn)
+	}
+}
+
+// hijackHTTPConn hijacks a http conn to run RPC protocol,
+// paired with client side func DialHTTPPathForConn()
+func hijackHTTPConn(w http.ResponseWriter, req *http.Request) (net.Conn, error) {
+	if req.Method != "CONNECT" {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		io.WriteString(w, "405 must CONNECT\n")
+		return nil, errors.New("405 must CONNECT")
+	}
+	conn, _, err := w.(http.Hijacker).Hijack()
+	if err != nil {
+		log.Print("rpc hijacking ", req.RemoteAddr, ": ", err.Error())
+		return nil, err
+	}
+	io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
+	return conn, nil
+}
+
+func handleWithEncDecoder(server *Server, edc EncDecoder) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		if conn, err := hijackHTTPConn(w, req); err == nil {
+			server.ServeConn(conn, edc)
+		}
+	}
+}
+
+// HandleHTTP registers an HTTP handler for RPC messages on rpcPath,
+// and a debugging handler on debugPath.
+// It is still necessary to invoke http.Serve(), typically in a go statement.
+func (server *Server) HandleHTTP(rpcPath, debugPath string, encdec ...EncDecoder) {
+	if len(encdec) == 0 {
+		http.Handle(rpcPath, server)
+	} else {
+		http.HandleFunc(rpcPath, handleWithEncDecoder(server, encdec[0]))
+	}
+	http.Handle(debugPath, debugHTTP{server})
+}
+
+// HandleHTTP registers an HTTP handler for RPC messages to DefaultServer
+// on DefaultRPCPath and a debugging handler on DefaultDebugPath.
+// It is still necessary to invoke http.Serve(), typically in a go statement.
+func HandleHTTP(encdec ...EncDecoder) {
+	DefaultServer.HandleHTTP(DefaultRPCPath, DefaultDebugPath, encdec...)
 }

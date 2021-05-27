@@ -7,8 +7,8 @@
 
   <title>rrpc - The Go Programming Language</title>
 
-<link href="doc_files/css.css" rel="stylesheet">
-<link href="doc_files/css_002.css" rel="stylesheet">
+<link href="doc_files/css_002" rel="stylesheet">
+<link href="doc_files/css" rel="stylesheet">
 <link type="text/css" rel="stylesheet" href="doc_files/style.css">
 
 <script>window.initFuncs = [];</script>
@@ -250,22 +250,10 @@
 			
 			
 				
-				<dd><a href="#Accept">func Accept(lis net.Listener)</a></dd>
+				<dd><a href="#Accept">func Accept(lis net.Listener, encdec ...EncDecoder)</a></dd>
 			
 				
-				<dd><a href="#Close">func Close()</a></dd>
-			
-				
-				<dd><a href="#DialHTTPPathForConn">func DialHTTPPathForConn(network, address, path string) (net.Conn, error)</a></dd>
-			
-				
-				<dd><a href="#HTTPDebugServer">func HTTPDebugServer(debugPath string, server *Server)</a></dd>
-			
-				
-				<dd><a href="#HandleHTTP">func HandleHTTP()</a></dd>
-			
-				
-				<dd><a href="#HijackHTTPConn">func HijackHTTPConn(w http.ResponseWriter, req *http.Request) (net.Conn, error)</a></dd>
+				<dd><a href="#HandleHTTP">func HandleHTTP(encdec ...EncDecoder)</a></dd>
 			
 				
 				<dd><a href="#Register">func Register(rcvr interface{}) error</a></dd>
@@ -282,23 +270,6 @@
 				
 				<dd><a href="#ServeRequest">func ServeRequest(codec Codec) error</a></dd>
 			
-			
-				
-				<dd><a href="#Acceptor">type Acceptor</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#NewAcceptor">func NewAcceptor(f func(net.Conn)) Acceptor</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#Acceptor.Accept">func (acpt Acceptor) Accept(lis net.Listener)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#Acceptor.HandleHTTP">func (acpt Acceptor) HandleHTTP(rpcPath string)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#Acceptor.ServeHTTP">func (acpt Acceptor) ServeHTTP(w http.ResponseWriter, req *http.Request)</a></dd>
-				
 			
 				
 				<dd><a href="#BiDirectionSession">type BiDirectionSession</a></dd>
@@ -332,16 +303,16 @@
 					<dd>&nbsp; &nbsp; <a href="#ConnBiDirectionCodec">func ConnBiDirectionCodec(srv *Server, codec Codec) *Client</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#Dial">func Dial(network, address string) (*Client, error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#Dial">func Dial(network, address string, encdec ...EncDecoder) (*Client, error)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#DialBiDirection">func DialBiDirection(network, address string) (*Client, error)</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#DialHTTP">func DialHTTP(network, address string) (*Client, error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#DialHTTP">func DialHTTP(network, address string, encdec ...EncDecoder) (*Client, error)</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#DialHTTPPath">func DialHTTPPath(network, address, path string) (*Client, error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#DialHTTPPath">func DialHTTPPath(network, address, path string, encdec ...EncDecoder) (*Client, error)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#NewClient">func NewClient(conn io.ReadWriteCloser, encdec ...EncDecoder) *Client</a></dd>
@@ -371,28 +342,6 @@
 				
 				<dd><a href="#Decoder">type Decoder</a></dd>
 				
-				
-			
-				
-				<dd><a href="#Dialer">type Dialer</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#Dialer.Dial">func (d Dialer) Dial(network, address string) (*Client, error)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#Dialer.DialHTTP">func (d Dialer) DialHTTP(network, address string) (*Client, error)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#Dialer.DialHTTPPath">func (d Dialer) DialHTTPPath(network, address, path string) (*Client, error)</a></dd>
-				
-			
-				
-				<dd><a href="#DiscardJsonDecoder">type DiscardJsonDecoder</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#DiscardJsonDecoder.Decode">func (djd *DiscardJsonDecoder) Decode(v interface{}) error</a></dd>
 				
 			
 				
@@ -429,7 +378,13 @@
 				
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#Server.Accept">func (server *Server) Accept(lis net.Listener, encdec ...EncDecoder)</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#Server.Close">func (s *Server) Close()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Server.HandleHTTP">func (server *Server) HandleHTTP(rpcPath, debugPath string, encdec ...EncDecoder)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Server.Register">func (server *Server) Register(rcvr interface{}) error</a></dd>
@@ -442,6 +397,9 @@
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Server.ServeConn">func (server *Server) ServeConn(conn io.ReadWriteCloser, encdec ...EncDecoder)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Server.ServeHTTP">func (server *Server) ServeHTTP(w http.ResponseWriter, req *http.Request)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Server.ServeRequest">func (server *Server) ServeRequest(codec Codec) error</a></dd>
@@ -466,8 +424,6 @@
 			<p>
 			<span style="font-size:90%">
 			
-				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go">acceptor.go</a>
-			
 				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/bi_direction.go">bi_direction.go</a>
 			
 				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go">client.go</a>
@@ -477,8 +433,6 @@
 				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/conn_driver.go">conn_driver.go</a>
 			
 				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/debug.go">debug.go</a>
-			
-				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/dialer.go">dialer.go</a>
 			
 				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/enc_decoder.go">enc_decoder.go</a>
 			
@@ -505,26 +459,10 @@
 			<h2 id="pkg-variables">Variables <a class="permalink" href="#pkg-variables">¶</a></h2>
 			
 				<p>
-DefaultAcceptor uses DefaultServer and gob encoder/decoder.
-</p>
-
-				<pre>var <span id="DefaultAcceptor">DefaultAcceptor</span> = <a href="#Acceptor">Acceptor</a>(func(conn <a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Conn">Conn</a>) {
-    <a href="#DefaultServer">DefaultServer</a>.<a href="#ServeConn">ServeConn</a>(conn, <a href="#GobEncDecoder">GobEncDecoder</a>)
-})</pre>
-			
-				<p>
 DefaultBiDirectionSession uses DefaultServer and GobEncDecoder
 </p>
 
 				<pre>var <span id="DefaultBiDirectionSession">DefaultBiDirectionSession</span> = &amp;<a href="#BiDirectionSession">BiDirectionSession</a>{<a href="#DefaultServer">DefaultServer</a>, <a href="#GobEncDecoder">GobEncDecoder</a>}</pre>
-			
-				<p>
-DefaultDialer uses go encode/decoder
-</p>
-
-				<pre>var <span id="DefaultDialer">DefaultDialer</span> = <a href="#Dialer">Dialer</a>(func(conn <a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Conn">Conn</a>) *<a href="#Client">Client</a> {
-    return <a href="#NewClient">NewClient</a>(conn, <a href="#GobEncDecoder">GobEncDecoder</a>)
-})</pre>
 			
 				<p>
 DefaultServer is the default instance of *Server.
@@ -539,12 +477,12 @@ DefaultServer is the default instance of *Server.
 		
 			
 			
-			<h2 id="Accept">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=1632:1661#L51">Accept</a>
+			<h2 id="Accept">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=19117:19168#L636">Accept</a>
 				<a class="permalink" href="#Accept">¶</a>
 				
 				
 			</h2>
-			<pre>func Accept(lis <a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Listener">Listener</a>)</pre>
+			<pre>func Accept(lis <a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Listener">Listener</a>, encdec ...<a href="#EncDecoder">EncDecoder</a>)</pre>
 			<p>
 Accept accepts connections on the listener and serves requests
 to DefaultServer for each incoming connection.
@@ -556,59 +494,12 @@ Accept blocks; the caller typically invokes it in a go statement.
 		
 			
 			
-			<h2 id="Close">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=1003:1015#L29">Close</a>
-				<a class="permalink" href="#Close">¶</a>
-				
-				
-			</h2>
-			<pre>func Close()</pre>
-			<p>
-Close shutdown rpc default server
-</p>
-
-			
-
-		
-			
-			
-			<h2 id="DialHTTPPathForConn">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/dialer.go?s=2310:2383#L62">DialHTTPPathForConn</a>
-				<a class="permalink" href="#DialHTTPPathForConn">¶</a>
-				
-				
-			</h2>
-			<pre>func DialHTTPPathForConn(network, address, path <a href="http://localhost:6868/pkg/builtin/#string">string</a>) (<a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Conn">Conn</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
-			<p>
-DialHTTPPathForConn connects to an HTTP RPC server
-at the specified network address and path, and return a conn to run RPC protocol
-paired with server side func HijackHTTPConn()
-</p>
-
-			
-
-		
-			
-			
-			<h2 id="HTTPDebugServer">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=3019:3073#L89">HTTPDebugServer</a>
-				<a class="permalink" href="#HTTPDebugServer">¶</a>
-				
-				
-			</h2>
-			<pre>func HTTPDebugServer(debugPath <a href="http://localhost:6868/pkg/builtin/#string">string</a>, server *<a href="#Server">Server</a>)</pre>
-			<p>
-HTTPDebugServer registers a HTTP debugging handler for server on debugPath
-</p>
-
-			
-
-		
-			
-			
-			<h2 id="HandleHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=3340:3357#L96">HandleHTTP</a>
+			<h2 id="HandleHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=21116:21153#L689">HandleHTTP</a>
 				<a class="permalink" href="#HandleHTTP">¶</a>
 				
 				
 			</h2>
-			<pre>func HandleHTTP()</pre>
+			<pre>func HandleHTTP(encdec ...<a href="#EncDecoder">EncDecoder</a>)</pre>
 			<p>
 HandleHTTP registers an HTTP handler for RPC messages to DefaultServer
 on DefaultRPCPath and a debugging handler on DefaultDebugPath.
@@ -620,23 +511,7 @@ It is still necessary to invoke http.Serve(), typically in a go statement.
 		
 			
 			
-			<h2 id="HijackHTTPConn">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=2143:2222#L65">HijackHTTPConn</a>
-				<a class="permalink" href="#HijackHTTPConn">¶</a>
-				
-				
-			</h2>
-			<pre>func HijackHTTPConn(w <a href="http://localhost:6868/pkg/net/http/">http</a>.<a href="http://localhost:6868/pkg/net/http/#ResponseWriter">ResponseWriter</a>, req *<a href="http://localhost:6868/pkg/net/http/">http</a>.<a href="http://localhost:6868/pkg/net/http/#Request">Request</a>) (<a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Conn">Conn</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
-			<p>
-HijackHTTPConn hijacks a http conn to run RPC protocol,
-paired with client side func DialHTTPPathForConn()
-</p>
-
-			
-
-		
-			
-			
-			<h2 id="Register">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17184:17221#L580">Register</a>
+			<h2 id="Register">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17308:17345#L588">Register</a>
 				<a class="permalink" href="#Register">¶</a>
 				
 				
@@ -651,7 +526,7 @@ Register publishes the receiver's methods in the DefaultServer.
 		
 			
 			
-			<h2 id="RegisterName">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17380:17434#L584">RegisterName</a>
+			<h2 id="RegisterName">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17504:17558#L592">RegisterName</a>
 				<a class="permalink" href="#RegisterName">¶</a>
 				
 				
@@ -667,7 +542,7 @@ instead of the receiver's concrete type.
 		
 			
 			
-			<h2 id="ServeCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=18082:18110#L600">ServeCodec</a>
+			<h2 id="ServeCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=18206:18234#L608">ServeCodec</a>
 				<a class="permalink" href="#ServeCodec">¶</a>
 				
 				
@@ -683,7 +558,7 @@ decode requests and encode responses.
 		
 			
 			
-			<h2 id="ServeConn">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17868:17929#L594">ServeConn</a>
+			<h2 id="ServeConn">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17992:18053#L602">ServeConn</a>
 				<a class="permalink" href="#ServeConn">¶</a>
 				
 				
@@ -703,7 +578,7 @@ See NewClient's comment for information about concurrent access.
 		
 			
 			
-			<h2 id="ServeRequest">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=18275:18311#L606">ServeRequest</a>
+			<h2 id="ServeRequest">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=18399:18435#L614">ServeRequest</a>
 				<a class="permalink" href="#ServeRequest">¶</a>
 				
 				
@@ -717,89 +592,6 @@ It does not close the codec upon completion.
 			
 
 		
-		
-			
-			
-			<h2 id="Acceptor">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=623:651#L16">Acceptor</a>
-				<a class="permalink" href="#Acceptor">¶</a>
-				
-				
-			</h2>
-			<p>
-Acceptor accepts and handle each RPC connection from clients
-</p>
-
-			<pre>type Acceptor func(<a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Conn">Conn</a>)</pre>
-
-			
-
-			
-
-			
-
-			
-				
-				<h3 id="NewAcceptor">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=731:774#L19">NewAcceptor</a>
-					<a class="permalink" href="#NewAcceptor">¶</a>
-					
-					
-				</h3>
-				<pre>func NewAcceptor(f func(<a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Conn">Conn</a>)) <a href="#Acceptor">Acceptor</a></pre>
-				<p>
-NewAcceptor returns a new Acceptor to accept net.Conn to run RPC protocol.
-</p>
-
-				
-			
-
-			
-				
-				<h3 id="Acceptor.Accept">func (Acceptor) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=1262:1307#L37">Accept</a>
-					<a class="permalink" href="#Acceptor.Accept">¶</a>
-					
-					
-				</h3>
-				<pre>func (acpt <a href="#Acceptor">Acceptor</a>) Accept(lis <a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Listener">Listener</a>)</pre>
-				<p>
-Accept accepts connections on the listener and serves requests
-for each incoming connection. Accept blocks until the listener
-returns a non-nil error. The caller typically invokes Accept in a
-go statement.
-</p>
-
-				
-				
-			
-				
-				<h3 id="Acceptor.HandleHTTP">func (Acceptor) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=2860:2907#L84">HandleHTTP</a>
-					<a class="permalink" href="#Acceptor.HandleHTTP">¶</a>
-					
-					
-				</h3>
-				<pre>func (acpt <a href="#Acceptor">Acceptor</a>) HandleHTTP(rpcPath <a href="http://localhost:6868/pkg/builtin/#string">string</a>)</pre>
-				<p>
-HandleHTTP registers an HTTP handler for RPC messages on rpcPath,
-and a debugging handler on debugPath.
-It is still necessary to invoke http.Serve(), typically in a go statement.
-</p>
-
-				
-				
-			
-				
-				<h3 id="Acceptor.ServeHTTP">func (Acceptor) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/acceptor.go?s=1882:1954#L57">ServeHTTP</a>
-					<a class="permalink" href="#Acceptor.ServeHTTP">¶</a>
-					
-					
-				</h3>
-				<pre>func (acpt <a href="#Acceptor">Acceptor</a>) ServeHTTP(w <a href="http://localhost:6868/pkg/net/http/">http</a>.<a href="http://localhost:6868/pkg/net/http/#ResponseWriter">ResponseWriter</a>, req *<a href="http://localhost:6868/pkg/net/http/">http</a>.<a href="http://localhost:6868/pkg/net/http/#Request">Request</a>)</pre>
-				<p>
-ServeHTTP implements a http.Handler that hijacks http conn to run RPC protocol.
-</p>
-
-				
-				
-			
 		
 			
 			
@@ -888,7 +680,7 @@ invoke remote services and serve calls from remote client with bidir.server
 		
 			
 			
-			<h2 id="Call">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=500:865#L16">Call</a>
+			<h2 id="Call">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=528:893#L19">Call</a>
 				<a class="permalink" href="#Call">¶</a>
 				
 				
@@ -918,7 +710,7 @@ Call represents an active RPC.
 		
 			
 			
-			<h2 id="Client">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=1049:1326#L28">Client</a>
+			<h2 id="Client">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=1077:1354#L31">Client</a>
 				<a class="permalink" href="#Client">¶</a>
 				
 				
@@ -971,12 +763,12 @@ return client for invoking remote services
 				
 			
 				
-				<h3 id="Dial">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/dialer.go?s=2021:2072#L55">Dial</a>
+				<h3 id="Dial">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=8421:8494#L287">Dial</a>
 					<a class="permalink" href="#Dial">¶</a>
 					
 					
 				</h3>
-				<pre>func Dial(network, address <a href="http://localhost:6868/pkg/builtin/#string">string</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
+				<pre>func Dial(network, address <a href="http://localhost:6868/pkg/builtin/#string">string</a>, encdec ...<a href="#EncDecoder">EncDecoder</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
 				<p>
 Dial connects to an RPC server at the specified network address.
 </p>
@@ -998,12 +790,12 @@ invoke remote services and serve calls from remote client with bidir.server
 				
 			
 				
-				<h3 id="DialHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/dialer.go?s=1596:1651#L44">DialHTTP</a>
+				<h3 id="DialHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=7423:7500#L255">DialHTTP</a>
 					<a class="permalink" href="#DialHTTP">¶</a>
 					
 					
 				</h3>
-				<pre>func DialHTTP(network, address <a href="http://localhost:6868/pkg/builtin/#string">string</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
+				<pre>func DialHTTP(network, address <a href="http://localhost:6868/pkg/builtin/#string">string</a>, encdec ...<a href="#EncDecoder">EncDecoder</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
 				<p>
 DialHTTP connects to an HTTP RPC server at the specified network address
 listening on the default HTTP RPC path.
@@ -1012,21 +804,21 @@ listening on the default HTTP RPC path.
 				
 			
 				
-				<h3 id="DialHTTPPath">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/dialer.go?s=1823:1888#L50">DialHTTPPath</a>
+				<h3 id="DialHTTPPath">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=7665:7752#L261">DialHTTPPath</a>
 					<a class="permalink" href="#DialHTTPPath">¶</a>
 					
 					
 				</h3>
-				<pre>func DialHTTPPath(network, address, path <a href="http://localhost:6868/pkg/builtin/#string">string</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
+				<pre>func DialHTTPPath(network, address, path <a href="http://localhost:6868/pkg/builtin/#string">string</a>, encdec ...<a href="#EncDecoder">EncDecoder</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
 				<p>
 DialHTTPPath connects to an HTTP RPC server
-at the specified network address and path, and return a RPC client
+at the specified network address and path.
 </p>
 
 				
 			
 				
-				<h3 id="NewClient">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=4721:4790#L164">NewClient</a>
+				<h3 id="NewClient">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=4749:4818#L167">NewClient</a>
 					<a class="permalink" href="#NewClient">¶</a>
 					
 					
@@ -1048,7 +840,7 @@ concurrent reads or concurrent writes.
 				
 			
 				
-				<h3 id="NewClientWithCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=5038:5082#L175">NewClientWithCodec</a>
+				<h3 id="NewClientWithCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=5066:5110#L178">NewClientWithCodec</a>
 					<a class="permalink" href="#NewClientWithCodec">¶</a>
 					
 					
@@ -1064,7 +856,7 @@ codec to encode requests and decode responses.
 
 			
 				
-				<h3 id="Client.Call">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=7085:7176#L245">Call</a>
+				<h3 id="Client.Call">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=7113:7204#L248">Call</a>
 					<a class="permalink" href="#Client.Call">¶</a>
 					
 					
@@ -1078,7 +870,7 @@ Call invokes the named function, waits for it to complete, and returns its error
 				
 			
 				
-				<h3 id="Client.Close">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=5324:5359#L184">Close</a>
+				<h3 id="Client.Close">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=5352:5387#L187">Close</a>
 					<a class="permalink" href="#Client.Close">¶</a>
 					
 					
@@ -1093,7 +885,7 @@ shutting down, ErrShutdown is returned.
 				
 			
 				
-				<h3 id="Client.Go">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=6360:6466#L223">Go</a>
+				<h3 id="Client.Go">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=6388:6494#L226">Go</a>
 					<a class="permalink" href="#Client.Go">¶</a>
 					
 					
@@ -1168,111 +960,6 @@ Codec is the transport thru which messages are sent/recv
 
 			
 
-			
-		
-			
-			
-			<h2 id="Dialer">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/dialer.go?s=501:535#L10">Dialer</a>
-				<a class="permalink" href="#Dialer">¶</a>
-				
-				
-			</h2>
-			<p>
-Dialer is RPC clients factory: dials RPC server for connections and create RPC clients
-</p>
-
-			<pre>type Dialer func(<a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Conn">Conn</a>) *<a href="#Client">Client</a></pre>
-
-			
-
-			
-
-			
-
-			
-
-			
-				
-				<h3 id="Dialer.Dial">func (Dialer) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/dialer.go?s=1309:1371#L34">Dial</a>
-					<a class="permalink" href="#Dialer.Dial">¶</a>
-					
-					
-				</h3>
-				<pre>func (d <a href="#Dialer">Dialer</a>) Dial(network, address <a href="http://localhost:6868/pkg/builtin/#string">string</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
-				<p>
-Dial connects to an RPC server at the specified network address.
-</p>
-
-				
-				
-			
-				
-				<h3 id="Dialer.DialHTTP">func (Dialer) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/dialer.go?s=796:862#L19">DialHTTP</a>
-					<a class="permalink" href="#Dialer.DialHTTP">¶</a>
-					
-					
-				</h3>
-				<pre>func (d <a href="#Dialer">Dialer</a>) DialHTTP(network, address <a href="http://localhost:6868/pkg/builtin/#string">string</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
-				<p>
-DialHTTP connects to an HTTP RPC server at the specified network address
-listening on the default HTTP RPC path.
-</p>
-
-				
-				
-			
-				
-				<h3 id="Dialer.DialHTTPPath">func (Dialer) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/dialer.go?s=1042:1118#L25">DialHTTPPath</a>
-					<a class="permalink" href="#Dialer.DialHTTPPath">¶</a>
-					
-					
-				</h3>
-				<pre>func (d <a href="#Dialer">Dialer</a>) DialHTTPPath(network, address, path <a href="http://localhost:6868/pkg/builtin/#string">string</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
-				<p>
-DialHTTPPath connects to an HTTP RPC server
-at the specified network address and path, and return a RPC client
-</p>
-
-				
-				
-			
-		
-			
-			
-			<h2 id="DiscardJsonDecoder">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/enc_decoder.go?s=930:979#L38">DiscardJsonDecoder</a>
-				<a class="permalink" href="#DiscardJsonDecoder">¶</a>
-				
-				
-			</h2>
-			<p>
-Following convention of gob decoder, if passed in v==nil,
-discard next value decoded
-</p>
-
-			<pre>type DiscardJsonDecoder struct {
-    *<a href="http://localhost:6868/pkg/encoding/json/">json</a>.<a href="http://localhost:6868/pkg/encoding/json/#Decoder">Decoder</a>
-}
-</pre>
-
-			
-
-			
-
-			
-
-			
-
-			
-				
-				<h3 id="DiscardJsonDecoder.Decode">func (*DiscardJsonDecoder) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/enc_decoder.go?s=981:1039#L42">Decode</a>
-					<a class="permalink" href="#DiscardJsonDecoder.Decode">¶</a>
-					
-					
-				</h3>
-				<pre>func (djd *<a href="#DiscardJsonDecoder">DiscardJsonDecoder</a>) Decode(v interface{}) <a href="http://localhost:6868/pkg/builtin/#error">error</a></pre>
-				
-				
-				
 			
 		
 			
@@ -1411,7 +1098,7 @@ Kind is the kind of messages sent/recv thru codec
 		
 			
 			
-			<h2 id="Server">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5162:5407#L154">Server</a>
+			<h2 id="Server">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5286:5531#L162">Server</a>
 				<a class="permalink" href="#Server">¶</a>
 				
 				
@@ -1433,7 +1120,7 @@ Server represents an RPC Server.
 
 			
 				
-				<h3 id="NewServer">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5444:5468#L165">NewServer</a>
+				<h3 id="NewServer">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5568:5592#L173">NewServer</a>
 					<a class="permalink" href="#NewServer">¶</a>
 					
 					
@@ -1448,7 +1135,24 @@ NewServer returns a new Server.
 
 			
 				
-				<h3 id="Server.Close">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5684:5708#L176">Close</a>
+				<h3 id="Server.Accept">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=18701:18769#L622">Accept</a>
+					<a class="permalink" href="#Server.Accept">¶</a>
+					
+					
+				</h3>
+				<pre>func (server *<a href="#Server">Server</a>) Accept(lis <a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Listener">Listener</a>, encdec ...<a href="#EncDecoder">EncDecoder</a>)</pre>
+				<p>
+Accept accepts connections on the listener and serves requests
+for each incoming connection. Accept blocks until the listener
+returns a non-nil error. The caller typically invokes Accept in a
+go statement.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Server.Close">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5808:5832#L184">Close</a>
 					<a class="permalink" href="#Server.Close">¶</a>
 					
 					
@@ -1462,7 +1166,23 @@ Close shutdown server
 				
 			
 				
-				<h3 id="Server.Register">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=7026:7080#L223">Register</a>
+				<h3 id="Server.HandleHTTP">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=20633:20714#L677">HandleHTTP</a>
+					<a class="permalink" href="#Server.HandleHTTP">¶</a>
+					
+					
+				</h3>
+				<pre>func (server *<a href="#Server">Server</a>) HandleHTTP(rpcPath, debugPath <a href="http://localhost:6868/pkg/builtin/#string">string</a>, encdec ...<a href="#EncDecoder">EncDecoder</a>)</pre>
+				<p>
+HandleHTTP registers an HTTP handler for RPC messages on rpcPath,
+and a debugging handler on debugPath.
+It is still necessary to invoke http.Serve(), typically in a go statement.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Server.Register">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=7150:7204#L231">Register</a>
 					<a class="permalink" href="#Server.Register">¶</a>
 					
 					
@@ -1488,7 +1208,7 @@ where Type is the receiver's concrete type.
 				
 			
 				
-				<h3 id="Server.RegisterName">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=7244:7315#L229">RegisterName</a>
+				<h3 id="Server.RegisterName">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=7368:7439#L237">RegisterName</a>
 					<a class="permalink" href="#Server.RegisterName">¶</a>
 					
 					
@@ -1503,7 +1223,7 @@ instead of the receiver's concrete type.
 				
 			
 				
-				<h3 id="Server.ServeCodec">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=12761:12806#L410">ServeCodec</a>
+				<h3 id="Server.ServeCodec">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=12885:12930#L418">ServeCodec</a>
 					<a class="permalink" href="#Server.ServeCodec">¶</a>
 					
 					
@@ -1518,7 +1238,7 @@ decode requests and encode responses.
 				
 			
 				
-				<h3 id="Server.ServeConn">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=12427:12505#L399">ServeConn</a>
+				<h3 id="Server.ServeConn">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=12551:12629#L407">ServeConn</a>
 					<a class="permalink" href="#Server.ServeConn">¶</a>
 					
 					
@@ -1537,7 +1257,21 @@ See NewClient's comment for information about concurrent access.
 				
 			
 				
-				<h3 id="Server.ServeRequest">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=14007:14060#L459">ServeRequest</a>
+				<h3 id="Server.ServeHTTP">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=19382:19455#L642">ServeHTTP</a>
+					<a class="permalink" href="#Server.ServeHTTP">¶</a>
+					
+					
+				</h3>
+				<pre>func (server *<a href="#Server">Server</a>) ServeHTTP(w <a href="http://localhost:6868/pkg/net/http/">http</a>.<a href="http://localhost:6868/pkg/net/http/#ResponseWriter">ResponseWriter</a>, req *<a href="http://localhost:6868/pkg/net/http/">http</a>.<a href="http://localhost:6868/pkg/net/http/#Request">Request</a>)</pre>
+				<p>
+ServeHTTP implements an http.Handler that answers RPC requests.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Server.ServeRequest">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=14131:14184#L467">ServeRequest</a>
 					<a class="permalink" href="#Server.ServeRequest">¶</a>
 					
 					
@@ -1554,7 +1288,7 @@ It does not close the codec upon completion.
 		
 			
 			
-			<h2 id="ServerError">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=325:348#L7">ServerError</a>
+			<h2 id="ServerError">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=353:376#L10">ServerError</a>
 				<a class="permalink" href="#ServerError">¶</a>
 				
 				
@@ -1576,7 +1310,7 @@ the remote side of the RPC connection.
 
 			
 				
-				<h3 id="ServerError.Error">func (ServerError) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=350:385#L9">Error</a>
+				<h3 id="ServerError.Error">func (ServerError) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=378:413#L12">Error</a>
 					<a class="permalink" href="#ServerError.Error">¶</a>
 					
 					

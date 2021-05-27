@@ -142,12 +142,9 @@ func startNewServer() {
 	var l net.Listener
 	l, newServerAddr = listenTCP()
 	log.Println("NewServer test RPC server listening on", newServerAddr)
-	acpt := NewAcceptor(func(conn net.Conn) {
-		newServer.ServeConn(conn, GobEncDecoder)
-	})
-	go acpt.Accept(l)
+	go newServer.Accept(l)
 
-	acpt.HandleHTTP(newHttpPath)
+	newServer.HandleHTTP(newHttpPath, "/bar")
 	httpOnce.Do(startHttpServer)
 }
 
@@ -701,9 +698,7 @@ func TestAcceptExitAfterListenerClose(t *testing.T) {
 	var l net.Listener
 	l, _ = listenTCP()
 	l.Close()
-	NewAcceptor(func(conn net.Conn) {
-		newServer.ServeConn(conn, GobEncDecoder)
-	}).Accept(l)
+	newServer.Accept(l)
 }
 
 func TestShutdown(t *testing.T) {

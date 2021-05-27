@@ -6,9 +6,12 @@
 package rrpc
 
 import (
+	"bufio"
 	"errors"
 	"io"
 	"log"
+	"net"
+	"net/http"
 	"sync"
 )
 
@@ -255,4 +258,46 @@ func (client *Client) Go(serviceMethod string, args interface{}, reply interface
 func (client *Client) Call(serviceMethod string, args interface{}, reply interface{}) error {
 	call := <-client.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
 	return call.Error
+}
+
+// DialHTTP connects to an HTTP RPC server at the specified network address
+// listening on the default HTTP RPC path.
+func DialHTTP(network, address string, encdec ...EncDecoder) (*Client, error) {
+	return DialHTTPPath(network, address, DefaultRPCPath, encdec...)
+}
+
+// DialHTTPPath connects to an HTTP RPC server
+// at the specified network address and path.
+func DialHTTPPath(network, address, path string, encdec ...EncDecoder) (*Client, error) {
+	conn, err := net.Dial(network, address)
+	if err != nil {
+		return nil, err
+	}
+	io.WriteString(conn, "CONNECT "+path+" HTTP/1.0\n\n")
+
+	// Require successful HTTP response
+	// before switching to RPC protocol.
+	resp, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: "CONNECT"})
+	if err == nil && resp.Status == connected {
+		return NewClient(conn, encdec...), nil
+	}
+	if err == nil {
+		err = errors.New("unexpected HTTP response: " + resp.Status)
+	}
+	conn.Close()
+	return nil, &net.OpError{
+		Op:   "dial-http",
+		Net:  network + " " + address,
+		Addr: nil,
+		Err:  err,
+	}
+}
+
+// Dial connects to an RPC server at the specified network address.
+func Dial(network, address string, encdec ...EncDecoder) (*Client, error) {
+	conn, err := net.Dial(network, address)
+	if err != nil {
+		return nil, err
+	}
+	return NewClient(conn, encdec...), nil
 }

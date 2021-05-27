@@ -25,10 +25,7 @@ func startJsonServer() {
 	var l net.Listener
 	l, jsonServerAddr = listenTCP()
 	log.Println("NewJsonServer test JSON RPC server listening on", jsonServerAddr)
-	acpt := NewAcceptor(func(conn net.Conn) {
-		jsonServer.ServeConn(conn, JsonEncDecoder)
-	})
-	go acpt.Accept(l)
+	go jsonServer.Accept(l, JsonEncDecoder)
 }
 
 // TestJsonRPC test RPC connections using JsonEncDecoder
@@ -38,10 +35,7 @@ func TestJsonRPC(t *testing.T) {
 }
 
 func testJsonRPC(t *testing.T, addr string) {
-	dialer := Dialer(func(conn net.Conn) *Client {
-		return NewClient(conn, JsonEncDecoder)
-	})
-	client, err := dialer.Dial("tcp", addr)
+	client, err := Dial("tcp", addr, JsonEncDecoder)
 	if err != nil {
 		t.Fatal("dialing", err)
 	}
