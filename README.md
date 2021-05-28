@@ -6,7 +6,7 @@ This is a fork of the originial Go net/rpc code for some rework/enhancements:
 
 * keep API the same as original as much as possible.
 
-* support easy swapping of different encoder/decoder: the default is still Gob, can replace with JSON encoder/decoder and others.
+* rework the internals so that codec and message receiver are reused for both client and server.
 
 * support simple bi-directional RPC thru the same connection.
 
