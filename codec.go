@@ -2,6 +2,8 @@ package rrpc
 
 import (
 	"bufio"
+	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -44,20 +46,45 @@ type Codec interface {
 	ReadBody(body interface{}) error
 }
 
+type Encoder interface {
+	Encode(interface{}) error
+}
+
+type Decoder interface {
+	Decode(interface{}) error
+}
+
 type codec struct {
 	rwc    io.ReadWriteCloser
 	dec    Decoder
 	enc    Encoder
 	encBuf *bufio.Writer
-	closed bool //???do we need this???
+	closed bool
 }
 
-func NewCodec(rwc io.ReadWriteCloser, encdec EncDecoder) Codec {
+// CodecMaker is a func to turn an io conn into Codec with
+// specific marshaling schemes, such Gob, JSON, protobuf,...
+type CodecMaker func(rwc io.ReadWriteCloser) Codec
+
+// NewGobCodec returns a Codec to marshal data using Gob
+func NewGobCodec(rwc io.ReadWriteCloser) Codec {
 	buf := bufio.NewWriter(rwc)
 	c := &codec{
 		rwc:    rwc,
-		dec:    encdec.NewDecoder(rwc),
-		enc:    encdec.NewEncoder(buf),
+		dec:    gob.NewDecoder(rwc),
+		enc:    gob.NewEncoder(buf),
+		encBuf: buf,
+	}
+	return c
+}
+
+// NewJsonCodec returns a Codec to marshal data using JSON
+func NewJsonCodec(rwc io.ReadWriteCloser) Codec {
+	buf := bufio.NewWriter(rwc)
+	c := &codec{
+		rwc:    rwc,
+		dec:    newJsonDecoder(rwc),
+		enc:    newJsonEncoder(buf),
 		encBuf: buf,
 	}
 	return c
@@ -106,4 +133,28 @@ func (c *codec) Close() error {
 	c.closed = true
 	c.encBuf.Flush()
 	return c.rwc.Close()
+}
+
+func newJsonEncoder(w io.Writer) Encoder {
+	return json.NewEncoder(w)
+}
+
+func newJsonDecoder(r io.Reader) Decoder {
+	dec := &discardJsonDecoder{json.NewDecoder(r)}
+	dec.DisallowUnknownFields()
+	return dec
+}
+
+// Following convention of gob decoder, if passed in v==nil,
+// discard next value decoded
+type discardJsonDecoder struct {
+	*json.Decoder
+}
+
+func (djd *discardJsonDecoder) Decode(v interface{}) error {
+	var discard interface{}
+	if v == nil {
+		v = &discard
+	}
+	return djd.Decoder.Decode(v)
 }

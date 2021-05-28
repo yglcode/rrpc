@@ -123,6 +123,9 @@ func startServer() {
 	RegisterName("net.rpc.Arith", new(Arith))
 	Register(BuiltinTypes{})
 
+	// set default codec to Gob
+	NewDefaultCodec = NewGobCodec
+
 	var l net.Listener
 	l, serverAddr = listenTCP()
 	log.Println("Test RPC server listening on", serverAddr)
@@ -138,6 +141,9 @@ func startNewServer() {
 	newServer.Register(new(Embed))
 	newServer.RegisterName("net.rpc.Arith", new(Arith))
 	newServer.RegisterName("newServer.Arith", new(Arith))
+
+	// set default codec to Gob
+	NewDefaultCodec = NewGobCodec
 
 	var l net.Listener
 	l, newServerAddr = listenTCP()

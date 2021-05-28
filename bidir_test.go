@@ -8,12 +8,13 @@ import (
 )
 
 func TestBiDirOverTcp(t *testing.T) {
-	//set up one end
+	// set default codec to Gob
+	NewDefaultCodec = NewGobCodec
+
+	// Serve Arith at this end of connection
 	mathServer := NewServer()
 	defer mathServer.Close()
 	mathServer.Register(new(Arith))
-	// Serve Arith at this end of connection
-	bidir1 := NewBiDirectionSession(mathServer, GobEncDecoder)
 
 	//this end will be connection server
 	var l net.Listener
@@ -27,7 +28,7 @@ func TestBiDirOverTcp(t *testing.T) {
 	go func() {
 		// Serve Arith at this end of connection
 		// and call Builtins at other end
-		builtinCli, err := bidir1.AcceptOne(l)
+		builtinCli, err := mathServer.AcceptBiDirection(l)
 		if err != nil {
 			t.Fatal("bidir.AcceptOne", err)
 		}
@@ -38,20 +39,62 @@ func TestBiDirOverTcp(t *testing.T) {
 		close(done)
 	}()
 
-	// set up other end
+	// Serve Builtins at this end of connection
 	builtinServer := NewServer()
 	defer builtinServer.Close()
 	builtinServer.Register(BuiltinTypes{})
-	// Serve Builtins at this end of connection
-	bidir2 := NewBiDirectionSession(builtinServer, GobEncDecoder)
 
 	// this end is connection client
 	// connect bidirection rpc and get client to call Arith
-	mathClient, err := bidir2.Dial("tcp", connServerAddr)
+	mathClient, err := builtinServer.DialBiDirection("tcp", connServerAddr)
 	if err != nil {
 		t.Fatal("bidir.dialing", err)
 	}
 	defer mathClient.Close()
+
+	testArith(t, mathClient)
+
+	//wait for goroutine to exit
+	<-done
+}
+
+func TestBiDirOverPipe(t *testing.T) {
+	// set up in-memory pipe
+	conn1, conn2 := net.Pipe()
+	defer conn1.Close()
+
+	codec1 := NewJsonCodec(conn1)
+	codec2 := NewJsonCodec(conn2)
+
+	// Serve Arith at one end of connection
+	mathServer := NewServer()
+	defer mathServer.Close()
+	mathServer.Register(new(Arith))
+
+	// receive client to call Builtin
+	builtinCli := mathServer.ConnectBiDirectionCodec(codec1)
+	defer builtinCli.Close()
+
+	// Serve Builtins at other end
+	builtinServer := NewServer()
+	defer builtinServer.Close()
+	builtinServer.Register(BuiltinTypes{})
+
+	// receive client to call math/Arith
+	mathClient := builtinServer.ConnectBiDirectionCodec(codec2)
+	defer mathClient.Close()
+
+	// use done chan to wait for goroutine exit
+	done := make(chan struct{})
+
+	go func() {
+		// Serve Arith at this end of connection
+		// and call Builtins at other end
+		// Test builtin calls
+		testBuiltin(t, builtinCli)
+		// mark goroutine is done
+		close(done)
+	}()
 
 	testArith(t, mathClient)
 

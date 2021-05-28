@@ -190,6 +190,10 @@ func NewServer() *Server {
 // DefaultServer is the default instance of *Server.
 var DefaultServer = NewServer()
 
+// NewDefaultCodec is used to create codec used in default connection set up:
+// Dial, DialHTTP, Accept, HandleHTTP,...
+var NewDefaultCodec CodecMaker = NewGobCodec
+
 // Close shutdown server
 func (s *Server) Close() {
 	s.connLock.Lock()
@@ -414,13 +418,8 @@ func (s *service) call(server *Server, sending *sync.Mutex, wg *sync.WaitGroup, 
 // ServeConn uses the gob wire format (see package gob) on the
 // connection. To use an alternate codec, use ServeCodec.
 // See NewClient's comment for information about concurrent access.
-func (server *Server) ServeConn(conn io.ReadWriteCloser, encdec ...EncDecoder) {
-	//by default use gob for encode/decode
-	edc := GobEncDecoder
-	if len(encdec) > 0 {
-		edc = encdec[0]
-	}
-	server.ServeCodec(NewCodec(conn, edc))
+func (server *Server) ServeConn(conn io.ReadWriteCloser) {
+	server.ServeCodec(NewDefaultCodec(conn))
 }
 
 // ServeCodec is like ServeConn but uses the specified codec to
@@ -609,8 +608,8 @@ func RegisterName(name string, rcvr interface{}) error {
 // ServeConn uses the gob wire format (see package gob) on the
 // connection. To use an alternate codec, use ServeCodec.
 // See NewClient's comment for information about concurrent access.
-func ServeConn(conn io.ReadWriteCloser, encdec ...EncDecoder) {
-	DefaultServer.ServeConn(conn, encdec...)
+func ServeConn(conn io.ReadWriteCloser) {
+	DefaultServer.ServeConn(conn)
 }
 
 // ServeCodec is like ServeConn but uses the specified codec to
@@ -625,25 +624,60 @@ func ServeRequest(codec Codec) error {
 	return DefaultServer.ServeRequest(codec)
 }
 
+// ConnectBiDirectionCodec connects server and conn/codec to remote peer
+// for bidirectional rpc. It will serve its registered obj/methods over conn,
+// return client for invoking remote services.
+func (server *Server) ConnectBiDirectionCodec(codec Codec) *Client {
+	conndrv := newConnDriver(codec)
+	conndrv.server = server
+	conndrv.client = newClient(conndrv)
+	go conndrv.Loop()
+	return conndrv.client
+}
+
+// AcceptBiDirection accept remote connection and setup bidirection rpc.
+// It return client to invoke remote services and serve calls from
+// remote client.
+func (server *Server) AcceptBiDirection(lis net.Listener) (*Client, error) {
+	conn, err := lis.Accept()
+	if err != nil {
+		log.Print("rpc.BiDirection: accept:", err.Error())
+		return nil, err
+	}
+	return server.ConnectBiDirectionCodec(NewDefaultCodec(conn)), nil
+}
+
+// DialBiDirection connects to remote server and setup bidirection rpc.
+// It return client to invoke remote services and serve calls from
+// remote client.
+func (server *Server) DialBiDirection(network, address string) (*Client, error) {
+	conn, err := net.Dial(network, address)
+	if err != nil {
+		log.Print("rpc.BiDirection: dial:", err.Error())
+		return nil, err
+	}
+	return server.ConnectBiDirectionCodec(NewDefaultCodec(conn)), nil
+}
+
 // Accept accepts connections on the listener and serves requests
 // for each incoming connection. Accept blocks until the listener
 // returns a non-nil error. The caller typically invokes Accept in a
 // go statement.
-func (server *Server) Accept(lis net.Listener, encdec ...EncDecoder) {
+func (server *Server) Accept(lis net.Listener) {
 	for {
 		conn, err := lis.Accept()
 		if err != nil {
 			log.Print("rpc.Serve: accept:", err.Error())
 			return
 		}
-		go server.ServeConn(conn, encdec...)
+		go server.ServeConn(conn)
 	}
 }
 
 // Accept accepts connections on the listener and serves requests
 // to DefaultServer for each incoming connection.
 // Accept blocks; the caller typically invokes it in a go statement.
-func Accept(lis net.Listener, encdec ...EncDecoder) { DefaultServer.Accept(lis, encdec...) }
+func Accept(lis net.Listener) { DefaultServer.Accept(lis) }
 
 // Can connect to RPC service using HTTP CONNECT to rpcPath.
 var connected = "200 Connected to Go RPC"
@@ -673,29 +707,29 @@ func hijackHTTPConn(w http.ResponseWriter, req *http.Request) (net.Conn, error) 
 	return conn, nil
 }
 
-func handleWithEncDecoder(server *Server, edc EncDecoder) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		if conn, err := hijackHTTPConn(w, req); err == nil {
-			server.ServeConn(conn, edc)
-		}
-	}
-}
-
 // HandleHTTP registers an HTTP handler for RPC messages on rpcPath,
 // and a debugging handler on debugPath.
 // It is still necessary to invoke http.Serve(), typically in a go statement.
-func (server *Server) HandleHTTP(rpcPath, debugPath string, encdec ...EncDecoder) {
-	if len(encdec) == 0 {
-		http.Handle(rpcPath, server)
-	} else {
-		http.HandleFunc(rpcPath, handleWithEncDecoder(server, encdec[0]))
-	}
+func (server *Server) HandleHTTP(rpcPath, debugPath string) {
+	http.Handle(rpcPath, server)
 	http.Handle(debugPath, debugHTTP{server})
 }
 
 // HandleHTTP registers an HTTP handler for RPC messages to DefaultServer
 // on DefaultRPCPath and a debugging handler on DefaultDebugPath.
 // It is still necessary to invoke http.Serve(), typically in a go statement.
-func HandleHTTP(encdec ...EncDecoder) {
-	DefaultServer.HandleHTTP(DefaultRPCPath, DefaultDebugPath, encdec...)
+func HandleHTTP() {
+	DefaultServer.HandleHTTP(DefaultRPCPath, DefaultDebugPath)
+}
+
+// DialBiDirection connects to remote server and setup bidirection rpc, return client to
+// invoke remote services and serve calls from remote client with DefaultServer
+func DialBiDirection(network, address string) (*Client, error) {
+	return DefaultServer.DialBiDirection(network, address)
+}
+
+// AcceptBiDirection accept remote connection and setup bidirection rpc, return client to
+// invoke remote services and serve calls from remote client with DefaultServer
+func AcceptBiDirection(lis net.Listener) (*Client, error) {
+	return DefaultServer.AcceptBiDirection(lis)
 }

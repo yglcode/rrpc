@@ -15,11 +15,15 @@ func TestInProcJsonRPC(t *testing.T) {
 	newServer.RegisterName("net.rpc.Arith", new(Arith))
 	newServer.RegisterName("newServer.Arith", new(Arith))
 
+	// change default codec to JSON
+	NewDefaultCodec = NewJsonCodec
+
 	cliConn, srvConn := net.Pipe()
 	defer cliConn.Close()
-	go newServer.ServeConn(srvConn, JsonEncDecoder)
 
-	client := NewClient(cliConn, JsonEncDecoder)
+	go newServer.ServeConn(srvConn)
+
+	client := NewClient(cliConn)
 
 	// Synchronous calls
 	args := &Args{7, 8}

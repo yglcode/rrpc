@@ -174,13 +174,8 @@ func (call *Call) done() {
 // so no interlocking is required. However each half may be accessed
 // concurrently so the implementation of conn should protect against
 // concurrent reads or concurrent writes.
-func NewClient(conn io.ReadWriteCloser, encdec ...EncDecoder) *Client {
-	edc := GobEncDecoder
-	if len(encdec) > 0 {
-		edc = encdec[0]
-	}
-	codec := NewCodec(conn, edc)
-	return NewClientWithCodec(codec)
+func NewClient(conn io.ReadWriteCloser) *Client {
+	return NewClientWithCodec(NewDefaultCodec(conn))
 }
 
 // NewClientWithCodec is like NewClient but uses the specified
@@ -262,13 +257,13 @@ func (client *Client) Call(serviceMethod string, args interface{}, reply interfa
 
 // DialHTTP connects to an HTTP RPC server at the specified network address
 // listening on the default HTTP RPC path.
-func DialHTTP(network, address string, encdec ...EncDecoder) (*Client, error) {
-	return DialHTTPPath(network, address, DefaultRPCPath, encdec...)
+func DialHTTP(network, address string) (*Client, error) {
+	return DialHTTPPath(network, address, DefaultRPCPath)
 }
 
 // DialHTTPPath connects to an HTTP RPC server
 // at the specified network address and path.
-func DialHTTPPath(network, address, path string, encdec ...EncDecoder) (*Client, error) {
+func DialHTTPPath(network, address, path string) (*Client, error) {
 	conn, err := net.Dial(network, address)
 	if err != nil {
 		return nil, err
@@ -279,7 +274,7 @@ func DialHTTPPath(network, address, path string, encdec ...EncDecoder) (*Client,
 	// before switching to RPC protocol.
 	resp, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: "CONNECT"})
 	if err == nil && resp.Status == connected {
-		return NewClient(conn, encdec...), nil
+		return NewClient(conn), nil
 	}
 	if err == nil {
 		err = errors.New("unexpected HTTP response: " + resp.Status)
@@ -294,10 +289,10 @@ func DialHTTPPath(network, address, path string, encdec ...EncDecoder) (*Client,
 }
 
 // Dial connects to an RPC server at the specified network address.
-func Dial(network, address string, encdec ...EncDecoder) (*Client, error) {
+func Dial(network, address string) (*Client, error) {
 	conn, err := net.Dial(network, address)
 	if err != nil {
 		return nil, err
 	}
-	return NewClient(conn, encdec...), nil
+	return NewClient(conn), nil
 }
