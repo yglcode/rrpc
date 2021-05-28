@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#00ADD8">
 
-  <title>rpc - The Go Programming Language</title>
+  <title>rrpc - The Go Programming Language</title>
 
 <link href="doc_files/css.css" rel="stylesheet">
 <link href="doc_files/css_002.css" rel="stylesheet">
@@ -56,7 +56,7 @@
 
 
   <h1>
-    Package rpc
+    Package rrpc
     <span class="text-muted"></span>
   </h1>
 
@@ -85,14 +85,12 @@
 		
 		<div id="short-nav">
 			<dl>
-			<dd><code>import "net/rpc"</code></dd>
+			<dd><code>import "github.com/yglcode/rrpc"</code></dd>
 			</dl>
 			<dl>
 			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
 			<dd><a href="#pkg-index" class="indexLink">Index</a></dd>
 			
-			
-				<dd><a href="#pkg-subdirectories">Subdirectories</a></dd>
 			
 			</dl>
 		</div>
@@ -103,143 +101,132 @@
 			</div>
 			<div class="expanded">
 				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
-				<p>
-Package rpc provides access to the exported methods of an object across a
-network or other I/O connection.  A server registers an object, making it visible
-as a service with the name of the type of the object.  After registration, exported
-methods of the object will be accessible remotely.  A server may register multiple
-objects (services) of different types but it is an error to register multiple
-objects of the same type.
-</p>
-<p>
-Only methods that satisfy these criteria will be made available for remote access;
-other methods will be ignored:
-</p>
-<pre>- the method's type is exported.
-- the method is exported.
-- the method has two arguments, both exported (or builtin) types.
-- the method's second argument is a pointer.
-- the method has return type error.
-</pre>
-<p>
-In effect, the method must look schematically like
-</p>
-<pre>func (t *T) MethodName(argType T1, replyType *T2) error
-</pre>
-<p>
-where T1 and T2 can be marshaled by encoding/gob.
-These requirements apply even if a different codec is used.
-(In the future, these requirements may soften for custom codecs.)
-</p>
-<p>
-The method's first argument represents the arguments provided by the caller; the
-second argument represents the result parameters to be returned to the caller.
-The method's return value, if non-nil, is passed back as a string that the client
-sees as if created by errors.New.  If an error is returned, the reply parameter
-will not be sent back to the client.
-</p>
-<p>
-The server may handle requests on a single connection by calling ServeConn.  More
-typically it will create a network listener and call Accept or, for an HTTP
-listener, HandleHTTP and http.Serve.
-</p>
-<p>
-A client wishing to use the service establishes a connection and then invokes
-NewClient on the connection.  The convenience function Dial (DialHTTP) performs
-both steps for a raw network connection (an HTTP connection).  The resulting
-Client object has two methods, Call and Go, that specify the service and method to
-call, a pointer containing the arguments, and a pointer to receive the result
-parameters.
-</p>
-<p>
-The Call method waits for the remote call to complete while the Go method
-launches the call asynchronously and signals completion using the Call
-structure's Done channel.
-</p>
-<p>
-Unless an explicit codec is set up, package encoding/gob is used to
-transport the data.
-</p>
-<p>
-Here is a simple example.  A server wishes to export an object of type Arith:
-</p>
-<pre>package server
+				<pre>	Package rrpc is a fork of standard library net/rpc, which has been frozen.
+        It provides access to the exported methods of an object across a
+	network or other I/O connection.  A server registers an object, making it visible
+	as a service with the name of the type of the object.  After registration, exported
+	methods of the object will be accessible remotely.  A server may register multiple
+	objects (services) of different types but it is an error to register multiple
+	objects of the same type.
 
-import "errors"
+	Only methods that satisfy these criteria will be made available for remote access;
+	other methods will be ignored:
 
-type Args struct {
-	A, B int
-}
+		- the method's type is exported.
+		- the method is exported.
+		- the method has two arguments, both exported (or builtin) types.
+		- the method's second argument is a pointer.
+		- the method has return type error.
 
-type Quotient struct {
-	Quo, Rem int
-}
+	In effect, the method must look schematically like
 
-type Arith int
+		func (t *T) MethodName(argType T1, replyType *T2) error
 
-func (t *Arith) Multiply(args *Args, reply *int) error {
-	*reply = args.A * args.B
-	return nil
-}
+	where T1 and T2 can be marshaled by encoding/gob.
+	These requirements apply even if a different codec is used.
+	(In the future, these requirements may soften for custom codecs.)
 
-func (t *Arith) Divide(args *Args, quo *Quotient) error {
-	if args.B == 0 {
-		return errors.New("divide by zero")
-	}
-	quo.Quo = args.A / args.B
-	quo.Rem = args.A % args.B
-	return nil
-}
+	The method's first argument represents the arguments provided by the caller; the
+	second argument represents the result parameters to be returned to the caller.
+	The method's return value, if non-nil, is passed back as a string that the client
+	sees as if created by errors.New.  If an error is returned, the reply parameter
+	will not be sent back to the client.
+
+	The server may handle requests on a single connection by calling ServeConn.  More
+	typically it will create a network listener and call Accept or, for an HTTP
+	listener, HandleHTTP and http.Serve.
+
+	A client wishing to use the service establishes a connection and then invokes
+	NewClient on the connection.  The convenience function Dial (DialHTTP) performs
+	both steps for a raw network connection (an HTTP connection).  The resulting
+	Client object has two methods, Call and Go, that specify the service and method to
+	call, a pointer containing the arguments, and a pointer to receive the result
+	parameters.
+
+	The Call method waits for the remote call to complete while the Go method
+	launches the call asynchronously and signals completion using the Call
+	structure's Done channel.
+
+	Unless an explicit codec is set up, package encoding/gob is used to
+	transport the data.
+
+	Here is a simple example.  A server wishes to export an object of type Arith:
+
+		package server
+
+		import "errors"
+
+		type Args struct {
+			A, B int
+		}
+
+		type Quotient struct {
+			Quo, Rem int
+		}
+
+		type Arith int
+
+		func (t *Arith) Multiply(args *Args, reply *int) error {
+			*reply = args.A * args.B
+			return nil
+		}
+
+		func (t *Arith) Divide(args *Args, quo *Quotient) error {
+			if args.B == 0 {
+				return errors.New("divide by zero")
+			}
+			quo.Quo = args.A / args.B
+			quo.Rem = args.A % args.B
+			return nil
+		}
+
+	The server calls (for HTTP service):
+
+		arith := new(Arith)
+		rrpc.Register(arith)
+		rrpc.HandleHTTP()
+		l, e := net.Listen("tcp", ":1234")
+		if e != nil {
+			log.Fatal("listen error:", e)
+		}
+		go http.Serve(l, nil)
+
+	At this point, clients can see a service "Arith" with methods "Arith.Multiply" and
+	"Arith.Divide".  To invoke one, a client first dials the server:
+
+		client, err := rrpc.DialHTTP("tcp", serverAddress + ":1234")
+		if err != nil {
+			log.Fatal("dialing:", err)
+		}
+
+	Then it can make a remote call:
+
+		// Synchronous call
+		args := &amp;server.Args{7,8}
+		var reply int
+		err = client.Call("Arith.Multiply", args, &amp;reply)
+		if err != nil {
+			log.Fatal("arith error:", err)
+		}
+		fmt.Printf("Arith: %d*%d=%d", args.A, args.B, reply)
+
+	or
+
+		// Asynchronous call
+		quotient := new(Quotient)
+		divCall := client.Go("Arith.Divide", args, quotient, nil)
+		replyCall := &lt;-divCall.Done	// will be equal to divCall
+		// check errors, print, etc.
+
+	A server implementation will often provide a simple, type-safe wrapper for the
+	client.
+
+	rrpc allows you change to use different encoder/decoder.
+        The default is Gob encoder/decoder, a JSON based encoder/decoder is provided.
+
+        rrpc also supports bidirectional rpc over the same connection,
+        where there are servers active at both ends of connection and serving clients at other end.
 </pre>
-<p>
-The server calls (for HTTP service):
-</p>
-<pre>arith := new(Arith)
-rpc.Register(arith)
-rpc.HandleHTTP()
-l, e := net.Listen("tcp", ":1234")
-if e != nil {
-	log.Fatal("listen error:", e)
-}
-go http.Serve(l, nil)
-</pre>
-<p>
-At this point, clients can see a service "Arith" with methods "Arith.Multiply" and
-"Arith.Divide".  To invoke one, a client first dials the server:
-</p>
-<pre>client, err := rpc.DialHTTP("tcp", serverAddress + ":1234")
-if err != nil {
-	log.Fatal("dialing:", err)
-}
-</pre>
-<p>
-Then it can make a remote call:
-</p>
-<pre>// Synchronous call
-args := &amp;server.Args{7,8}
-var reply int
-err = client.Call("Arith.Multiply", args, &amp;reply)
-if err != nil {
-	log.Fatal("arith error:", err)
-}
-fmt.Printf("Arith: %d*%d=%d", args.A, args.B, reply)
-</pre>
-<p>
-or
-</p>
-<pre>// Asynchronous call
-quotient := new(Quotient)
-divCall := client.Go("Arith.Divide", args, quotient, nil)
-replyCall := &lt;-divCall.Done	// will be equal to divCall
-// check errors, print, etc.
-</pre>
-<p>
-A server implementation will often provide a simple, type-safe wrapper for the
-client.
-</p>
-<p>
-The net/rpc package is frozen and is not accepting new features.
-</p>
 
 				
 			</div>
@@ -275,13 +262,13 @@ The net/rpc package is frozen and is not accepting new features.
 				<dd><a href="#RegisterName">func RegisterName(name string, rcvr interface{}) error</a></dd>
 			
 				
-				<dd><a href="#ServeCodec">func ServeCodec(codec ServerCodec)</a></dd>
+				<dd><a href="#ServeCodec">func ServeCodec(codec Codec)</a></dd>
 			
 				
 				<dd><a href="#ServeConn">func ServeConn(conn io.ReadWriteCloser)</a></dd>
 			
 				
-				<dd><a href="#ServeRequest">func ServeRequest(codec ServerCodec) error</a></dd>
+				<dd><a href="#ServeRequest">func ServeRequest(codec Codec) error</a></dd>
 			
 			
 				
@@ -293,7 +280,13 @@ The net/rpc package is frozen and is not accepting new features.
 				<dd><a href="#Client">type Client</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#AcceptBiDirection">func AcceptBiDirection(lis net.Listener) (*Client, error)</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#Dial">func Dial(network, address string) (*Client, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#DialBiDirection">func DialBiDirection(network, address string) (*Client, error)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#DialHTTP">func DialHTTP(network, address string) (*Client, error)</a></dd>
@@ -305,7 +298,7 @@ The net/rpc package is frozen and is not accepting new features.
 					<dd>&nbsp; &nbsp; <a href="#NewClient">func NewClient(conn io.ReadWriteCloser) *Client</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#NewClientWithCodec">func NewClientWithCodec(codec ClientCodec) *Client</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#NewClientWithCodec">func NewClientWithCodec(codec Codec) *Client</a></dd>
 				
 				
 					
@@ -319,18 +312,45 @@ The net/rpc package is frozen and is not accepting new features.
 				
 			
 				
-				<dd><a href="#ClientCodec">type ClientCodec</a></dd>
+				<dd><a href="#Codec">type Codec</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewGobCodec">func NewGobCodec(rwc io.ReadWriteCloser) Codec</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewJsonCodec">func NewJsonCodec(rwc io.ReadWriteCloser) Codec</a></dd>
 				
 				
 			
 				
-				<dd><a href="#Request">type Request</a></dd>
+				<dd><a href="#CodecMaker">type CodecMaker</a></dd>
 				
 				
 			
 				
-				<dd><a href="#Response">type Response</a></dd>
+				<dd><a href="#Decoder">type Decoder</a></dd>
 				
+				
+			
+				
+				<dd><a href="#Encoder">type Encoder</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Header">type Header</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Header.String">func (h Header) String() string</a></dd>
+				
+			
+				
+				<dd><a href="#Kind">type Kind</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Kind.String">func (k Kind) String() string</a></dd>
 				
 			
 				
@@ -344,6 +364,18 @@ The net/rpc package is frozen and is not accepting new features.
 					<dd>&nbsp; &nbsp; <a href="#Server.Accept">func (server *Server) Accept(lis net.Listener)</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#Server.AcceptBiDirection">func (server *Server) AcceptBiDirection(lis net.Listener) (*Client, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Server.Close">func (s *Server) Close()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Server.ConnectBiDirectionCodec">func (server *Server) ConnectBiDirectionCodec(codec Codec) *Client</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Server.DialBiDirection">func (server *Server) DialBiDirection(network, address string) (*Client, error)</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#Server.HandleHTTP">func (server *Server) HandleHTTP(rpcPath, debugPath string)</a></dd>
 				
 					
@@ -353,7 +385,7 @@ The net/rpc package is frozen and is not accepting new features.
 					<dd>&nbsp; &nbsp; <a href="#Server.RegisterName">func (server *Server) RegisterName(name string, rcvr interface{}) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#Server.ServeCodec">func (server *Server) ServeCodec(codec ServerCodec)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#Server.ServeCodec">func (server *Server) ServeCodec(codec Codec)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Server.ServeConn">func (server *Server) ServeConn(conn io.ReadWriteCloser)</a></dd>
@@ -362,12 +394,7 @@ The net/rpc package is frozen and is not accepting new features.
 					<dd>&nbsp; &nbsp; <a href="#Server.ServeHTTP">func (server *Server) ServeHTTP(w http.ResponseWriter, req *http.Request)</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#Server.ServeRequest">func (server *Server) ServeRequest(codec ServerCodec) error</a></dd>
-				
-			
-				
-				<dd><a href="#ServerCodec">type ServerCodec</a></dd>
-				
+					<dd>&nbsp; &nbsp; <a href="#Server.ServeRequest">func (server *Server) ServeRequest(codec Codec) error</a></dd>
 				
 			
 				
@@ -389,11 +416,15 @@ The net/rpc package is frozen and is not accepting new features.
 			<p>
 			<span style="font-size:90%">
 			
-				<a href="http://localhost:6868/src/net/rpc/client.go">client.go</a>
+				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go">client.go</a>
 			
-				<a href="http://localhost:6868/src/net/rpc/debug.go">debug.go</a>
+				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go">codec.go</a>
 			
-				<a href="http://localhost:6868/src/net/rpc/server.go">server.go</a>
+				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/conn_driver.go">conn_driver.go</a>
+			
+				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/debug.go">debug.go</a>
+			
+				<a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go">server.go</a>
 			
 			</span>
 			</p>
@@ -428,7 +459,7 @@ DefaultServer is the default instance of *Server.
 		
 			
 			
-			<h2 id="Accept">func <a href="http://localhost:6868/src/net/rpc/server.go?s=20693:20722#L675">Accept</a>
+			<h2 id="Accept">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=20361:20390#L670">Accept</a>
 				<a class="permalink" href="#Accept">¶</a>
 				
 				
@@ -445,7 +476,7 @@ Accept blocks; the caller typically invokes it in a go statement.
 		
 			
 			
-			<h2 id="HandleHTTP">func <a href="http://localhost:6868/src/net/rpc/server.go?s=21953:21970#L708">HandleHTTP</a>
+			<h2 id="HandleHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=21940:21957#L711">HandleHTTP</a>
 				<a class="permalink" href="#HandleHTTP">¶</a>
 				
 				
@@ -462,7 +493,7 @@ It is still necessary to invoke http.Serve(), typically in a go statement.
 		
 			
 			
-			<h2 id="Register">func <a href="http://localhost:6868/src/net/rpc/server.go?s=18599:18636#L625">Register</a>
+			<h2 id="Register">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17349:17386#L587">Register</a>
 				<a class="permalink" href="#Register">¶</a>
 				
 				
@@ -477,7 +508,7 @@ Register publishes the receiver's methods in the DefaultServer.
 		
 			
 			
-			<h2 id="RegisterName">func <a href="http://localhost:6868/src/net/rpc/server.go?s=18795:18849#L629">RegisterName</a>
+			<h2 id="RegisterName">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17545:17599#L591">RegisterName</a>
 				<a class="permalink" href="#RegisterName">¶</a>
 				
 				
@@ -493,12 +524,12 @@ instead of the receiver's concrete type.
 		
 			
 			
-			<h2 id="ServeCodec">func <a href="http://localhost:6868/src/net/rpc/server.go?s=20219:20253#L662">ServeCodec</a>
+			<h2 id="ServeCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=18214:18242#L607">ServeCodec</a>
 				<a class="permalink" href="#ServeCodec">¶</a>
 				
 				
 			</h2>
-			<pre>func ServeCodec(codec <a href="#ServerCodec">ServerCodec</a>)</pre>
+			<pre>func ServeCodec(codec <a href="#Codec">Codec</a>)</pre>
 			<p>
 ServeCodec is like ServeConn but uses the specified codec to
 decode requests and encode responses.
@@ -509,7 +540,7 @@ decode requests and encode responses.
 		
 			
 			
-			<h2 id="ServeConn">func <a href="http://localhost:6868/src/net/rpc/server.go?s=20038:20077#L656">ServeConn</a>
+			<h2 id="ServeConn">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=18033:18072#L601">ServeConn</a>
 				<a class="permalink" href="#ServeConn">¶</a>
 				
 				
@@ -529,12 +560,12 @@ See NewClient's comment for information about concurrent access.
 		
 			
 			
-			<h2 id="ServeRequest">func <a href="http://localhost:6868/src/net/rpc/server.go?s=20418:20460#L668">ServeRequest</a>
+			<h2 id="ServeRequest">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=18407:18443#L613">ServeRequest</a>
 				<a class="permalink" href="#ServeRequest">¶</a>
 				
 				
 			</h2>
-			<pre>func ServeRequest(codec <a href="#ServerCodec">ServerCodec</a>) <a href="http://localhost:6868/pkg/builtin/#error">error</a></pre>
+			<pre>func ServeRequest(codec <a href="#Codec">Codec</a>) <a href="http://localhost:6868/pkg/builtin/#error">error</a></pre>
 			<p>
 ServeRequest is like ServeCodec but synchronously serves a single request.
 It does not close the codec upon completion.
@@ -546,7 +577,7 @@ It does not close the codec upon completion.
 		
 			
 			
-			<h2 id="Call">type <a href="http://localhost:6868/src/net/rpc/client.go?s=540:905#L19">Call</a>
+			<h2 id="Call">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=528:893#L19">Call</a>
 				<a class="permalink" href="#Call">¶</a>
 				
 				
@@ -576,7 +607,7 @@ Call represents an active RPC.
 		
 			
 			
-			<h2 id="Client">type <a href="http://localhost:6868/src/net/rpc/client.go?s=1089:1365#L31">Client</a>
+			<h2 id="Client">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=1077:1354#L31">Client</a>
 				<a class="permalink" href="#Client">¶</a>
 				
 				
@@ -601,7 +632,21 @@ multiple goroutines simultaneously.
 
 			
 				
-				<h3 id="Dial">func <a href="http://localhost:6868/src/net/rpc/client.go?s=7465:7516#L263">Dial</a>
+				<h3 id="AcceptBiDirection">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=22486:22543#L723">AcceptBiDirection</a>
+					<a class="permalink" href="#AcceptBiDirection">¶</a>
+					
+					
+				</h3>
+				<pre>func AcceptBiDirection(lis <a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Listener">Listener</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
+				<p>
+AcceptBiDirection accept remote connection and setup bidirection rpc, return client to
+invoke remote services and serve calls from remote client with DefaultServer
+</p>
+
+				
+			
+				
+				<h3 id="Dial">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=8254:8305#L282">Dial</a>
 					<a class="permalink" href="#Dial">¶</a>
 					
 					
@@ -614,7 +659,21 @@ Dial connects to an RPC server at the specified network address.
 				
 			
 				
-				<h3 id="DialHTTP">func <a href="http://localhost:6868/src/net/rpc/client.go?s=6533:6588#L231">DialHTTP</a>
+				<h3 id="DialBiDirection">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=22192:22254#L717">DialBiDirection</a>
+					<a class="permalink" href="#DialBiDirection">¶</a>
+					
+					
+				</h3>
+				<pre>func DialBiDirection(network, address <a href="http://localhost:6868/pkg/builtin/#string">string</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
+				<p>
+DialBiDirection connects to remote server and setup bidirection rpc, return client to
+invoke remote services and serve calls from remote client with DefaultServer
+</p>
+
+				
+			
+				
+				<h3 id="DialHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=7322:7377#L250">DialHTTP</a>
 					<a class="permalink" href="#DialHTTP">¶</a>
 					
 					
@@ -628,7 +687,7 @@ listening on the default HTTP RPC path.
 				
 			
 				
-				<h3 id="DialHTTPPath">func <a href="http://localhost:6868/src/net/rpc/client.go?s=6742:6807#L237">DialHTTPPath</a>
+				<h3 id="DialHTTPPath">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=7531:7596#L256">DialHTTPPath</a>
 					<a class="permalink" href="#DialHTTPPath">¶</a>
 					
 					
@@ -642,7 +701,7 @@ at the specified network address and path.
 				
 			
 				
-				<h3 id="NewClient">func <a href="http://localhost:6868/src/net/rpc/client.go?s=5331:5378#L183">NewClient</a>
+				<h3 id="NewClient">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=4749:4796#L167">NewClient</a>
 					<a class="permalink" href="#NewClient">¶</a>
 					
 					
@@ -664,12 +723,12 @@ concurrent reads or concurrent writes.
 				
 			
 				
-				<h3 id="NewClientWithCodec">func <a href="http://localhost:6868/src/net/rpc/client.go?s=5652:5702#L191">NewClientWithCodec</a>
+				<h3 id="NewClientWithCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=4965:5009#L173">NewClientWithCodec</a>
 					<a class="permalink" href="#NewClientWithCodec">¶</a>
 					
 					
 				</h3>
-				<pre>func NewClientWithCodec(codec <a href="#ClientCodec">ClientCodec</a>) *<a href="#Client">Client</a></pre>
+				<pre>func NewClientWithCodec(codec <a href="#Codec">Codec</a>) *<a href="#Client">Client</a></pre>
 				<p>
 NewClientWithCodec is like NewClient but uses the specified
 codec to encode requests and decode responses.
@@ -680,7 +739,7 @@ codec to encode requests and decode responses.
 
 			
 				
-				<h3 id="Client.Call">func (*Client) <a href="http://localhost:6868/src/net/rpc/client.go?s=8999:9090#L310">Call</a>
+				<h3 id="Client.Call">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=7012:7103#L243">Call</a>
 					<a class="permalink" href="#Client.Call">¶</a>
 					
 					
@@ -694,7 +753,7 @@ Call invokes the named function, waits for it to complete, and returns its error
 				
 			
 				
-				<h3 id="Client.Close">func (*Client) <a href="http://localhost:6868/src/net/rpc/client.go?s=7754:7789#L273">Close</a>
+				<h3 id="Client.Close">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=5251:5286#L182">Close</a>
 					<a class="permalink" href="#Client.Close">¶</a>
 					
 					
@@ -709,7 +768,7 @@ shutting down, ErrShutdown is returned.
 				
 			
 				
-				<h3 id="Client.Go">func (*Client) <a href="http://localhost:6868/src/net/rpc/client.go?s=8274:8380#L288">Go</a>
+				<h3 id="Client.Go">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=6287:6393#L221">Go</a>
 					<a class="permalink" href="#Client.Go">¶</a>
 					
 					
@@ -728,29 +787,99 @@ If non-nil, done must be buffered or Go will deliberately crash.
 		
 			
 			
-			<h2 id="ClientCodec">type <a href="http://localhost:6868/src/net/rpc/client.go?s=1895:2058#L53">ClientCodec</a>
-				<a class="permalink" href="#ClientCodec">¶</a>
+			<h2 id="Codec">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=679:843#L32">Codec</a>
+				<a class="permalink" href="#Codec">¶</a>
 				
 				
 			</h2>
 			<p>
-A ClientCodec implements writing of RPC requests and
-reading of RPC responses for the client side of an RPC session.
-The client calls WriteRequest to write a request to the connection
-and calls ReadResponseHeader and ReadResponseBody in pairs
-to read responses. The client calls Close when finished with the
-connection. ReadResponseBody may be called with a nil
-argument to force the body of the response to be read and then
-discarded.
-See NewClient's comment for information about concurrent access.
+Codec is the transport thru which messages are sent/recv
 </p>
 
-			<pre>type ClientCodec interface {
-    WriteRequest(*<a href="#Request">Request</a>, interface{}) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
-    ReadResponseHeader(*<a href="#Response">Response</a>) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
-    ReadResponseBody(interface{}) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
-
+			<pre>type Codec interface {
+    WriteHeaderBody(header *<a href="#Header">Header</a>, body interface{}) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
     Close() <a href="http://localhost:6868/pkg/builtin/#error">error</a>
+    ReadHeader(header *<a href="#Header">Header</a>) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
+    ReadBody(body interface{}) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
+}</pre>
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="NewGobCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=1301:1347#L60">NewGobCodec</a>
+					<a class="permalink" href="#NewGobCodec">¶</a>
+					
+					
+				</h3>
+				<pre>func NewGobCodec(rwc <a href="http://localhost:6868/pkg/io/">io</a>.<a href="http://localhost:6868/pkg/io/#ReadWriteCloser">ReadWriteCloser</a>) <a href="#Codec">Codec</a></pre>
+				<p>
+NewGobCodec returns a Codec to marshal data using Gob
+</p>
+
+				
+			
+				
+				<h3 id="NewJsonCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=1560:1607#L72">NewJsonCodec</a>
+					<a class="permalink" href="#NewJsonCodec">¶</a>
+					
+					
+				</h3>
+				<pre>func NewJsonCodec(rwc <a href="http://localhost:6868/pkg/io/">io</a>.<a href="http://localhost:6868/pkg/io/#ReadWriteCloser">ReadWriteCloser</a>) <a href="#Codec">Codec</a></pre>
+				<p>
+NewJsonCodec returns a Codec to marshal data using JSON
+</p>
+
+				
+			
+
+			
+		
+			
+			
+			<h2 id="CodecMaker">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=1192:1242#L57">CodecMaker</a>
+				<a class="permalink" href="#CodecMaker">¶</a>
+				
+				
+			</h2>
+			<p>
+CodecMaker is a func to turn an io conn into Codec with
+specific marshaling schemes, such Gob, JSON, protobuf,...
+</p>
+
+			<pre>type CodecMaker func(rwc <a href="http://localhost:6868/pkg/io/">io</a>.<a href="http://localhost:6868/pkg/io/#ReadWriteCloser">ReadWriteCloser</a>) <a href="#Codec">Codec</a></pre>
+
+			
+
+			
+				<p>
+NewDefaultCodec is used to create codec used in default connection set up:
+Dial, DialHTTP, Accept, HandleHTTP,...
+</p>
+
+				<pre>var <span id="NewDefaultCodec">NewDefaultCodec</span> <a href="#CodecMaker">CodecMaker</a> = <a href="#NewGobCodec">NewGobCodec</a></pre>
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Decoder">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=900:953#L43">Decoder</a>
+				<a class="permalink" href="#Decoder">¶</a>
+				
+				
+			</h2>
+			
+			<pre>type Decoder interface {
+    Decode(interface{}) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
 }</pre>
 
 			
@@ -765,23 +894,15 @@ See NewClient's comment for information about concurrent access.
 		
 			
 			
-			<h2 id="Request">type <a href="http://localhost:6868/src/net/rpc/server.go?s=5113:5299#L161">Request</a>
-				<a class="permalink" href="#Request">¶</a>
+			<h2 id="Encoder">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=845:898#L39">Encoder</a>
+				<a class="permalink" href="#Encoder">¶</a>
 				
 				
 			</h2>
-			<p>
-Request is a header written before every RPC call. It is used internally
-but documented here as an aid to debugging, such as when analyzing
-network traffic.
-</p>
-
-			<pre>type Request struct {
-<span id="Request.ServiceMethod"></span>    ServiceMethod <a href="http://localhost:6868/pkg/builtin/#string">string</a> <span class="comment">// format: "Service.Method"</span>
-<span id="Request.Seq"></span>    Seq           <a href="http://localhost:6868/pkg/builtin/#uint64">uint64</a> <span class="comment">// sequence number chosen by client</span>
-    <span class="comment">// contains filtered or unexported fields</span>
-}
-</pre>
+			
+			<pre>type Encoder interface {
+    Encode(interface{}) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
+}</pre>
 
 			
 
@@ -795,21 +916,20 @@ network traffic.
 		
 			
 			
-			<h2 id="Response">type <a href="http://localhost:6868/src/net/rpc/server.go?s=5470:5699#L170">Response</a>
-				<a class="permalink" href="#Response">¶</a>
+			<h2 id="Header">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=378:514#L19">Header</a>
+				<a class="permalink" href="#Header">¶</a>
 				
 				
 			</h2>
 			<p>
-Response is a header written before every RPC return. It is used internally
-but documented here as an aid to debugging, such as when analyzing
-network traffic.
+Header is the header of messages sent/recv
 </p>
 
-			<pre>type Response struct {
-<span id="Response.ServiceMethod"></span>    ServiceMethod <a href="http://localhost:6868/pkg/builtin/#string">string</a> <span class="comment">// echoes that of the Request</span>
-<span id="Response.Seq"></span>    Seq           <a href="http://localhost:6868/pkg/builtin/#uint64">uint64</a> <span class="comment">// echoes that of the request</span>
-<span id="Response.Error"></span>    Error         <a href="http://localhost:6868/pkg/builtin/#string">string</a> <span class="comment">// error, if any.</span>
+			<pre>type Header struct {
+<span id="Header.Kind"></span>    Kind          <a href="#Kind">Kind</a>
+<span id="Header.ServiceMethod"></span>    ServiceMethod <a href="http://localhost:6868/pkg/builtin/#string">string</a>
+<span id="Header.Seq"></span>    Seq           <a href="http://localhost:6868/pkg/builtin/#uint64">uint64</a>
+<span id="Header.Info"></span>    Info          interface{}
     <span class="comment">// contains filtered or unexported fields</span>
 }
 </pre>
@@ -823,10 +943,63 @@ network traffic.
 			
 
 			
+				
+				<h3 id="Header.String">func (Header) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=516:547#L27">String</a>
+					<a class="permalink" href="#Header.String">¶</a>
+					
+					
+				</h3>
+				<pre>func (h <a href="#Header">Header</a>) String() <a href="http://localhost:6868/pkg/builtin/#string">string</a></pre>
+				
+				
+				
+			
 		
 			
 			
-			<h2 id="Server">type <a href="http://localhost:6868/src/net/rpc/server.go?s=5737:5935#L178">Server</a>
+			<h2 id="Kind">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=140:154#L3">Kind</a>
+				<a class="permalink" href="#Kind">¶</a>
+				
+				
+			</h2>
+			<p>
+Kind is the kind of messages sent/recv thru codec
+</p>
+
+			<pre>type Kind <a href="http://localhost:6868/pkg/builtin/#byte">byte</a></pre>
+
+			
+				
+				<pre>const (
+    <span id="Request">Request</span> <a href="#Kind">Kind</a> = <a href="http://localhost:6868/pkg/builtin/#iota">iota</a>
+    <span id="Response">Response</span>
+    <span id="Error">Error</span>
+    <span id="NumKind">NumKind</span>
+)</pre>
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Kind.String">func (Kind) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/codec.go?s=277:306#L14">String</a>
+					<a class="permalink" href="#Kind.String">¶</a>
+					
+					
+				</h3>
+				<pre>func (k <a href="#Kind">Kind</a>) String() <a href="http://localhost:6868/pkg/builtin/#string">string</a></pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Server">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5286:5531#L162">Server</a>
 				<a class="permalink" href="#Server">¶</a>
 				
 				
@@ -848,7 +1021,7 @@ Server represents an RPC Server.
 
 			
 				
-				<h3 id="NewServer">func <a href="http://localhost:6868/src/net/rpc/server.go?s=5972:5996#L187">NewServer</a>
+				<h3 id="NewServer">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5568:5592#L173">NewServer</a>
 					<a class="permalink" href="#NewServer">¶</a>
 					
 					
@@ -863,7 +1036,7 @@ NewServer returns a new Server.
 
 			
 				
-				<h3 id="Server.Accept">func (*Server) <a href="http://localhost:6868/src/net/rpc/server.go?s=18334:18380#L613">Accept</a>
+				<h3 id="Server.Accept">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=19978:20024#L656">Accept</a>
 					<a class="permalink" href="#Server.Accept">¶</a>
 					
 					
@@ -880,7 +1053,69 @@ go statement.
 				
 			
 				
-				<h3 id="Server.HandleHTTP">func (*Server) <a href="http://localhost:6868/src/net/rpc/server.go?s=21597:21656#L700">HandleHTTP</a>
+				<h3 id="Server.AcceptBiDirection">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=19056:19130#L631">AcceptBiDirection</a>
+					<a class="permalink" href="#Server.AcceptBiDirection">¶</a>
+					
+					
+				</h3>
+				<pre>func (server *<a href="#Server">Server</a>) AcceptBiDirection(lis <a href="http://localhost:6868/pkg/net/">net</a>.<a href="http://localhost:6868/pkg/net/#Listener">Listener</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
+				<p>
+AcceptBiDirection accept remote connection and setup bidirection rpc.
+It return client to invoke remote services and serve calls from
+remote client.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Server.Close">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5974:5998#L188">Close</a>
+					<a class="permalink" href="#Server.Close">¶</a>
+					
+					
+				</h3>
+				<pre>func (s *<a href="#Server">Server</a>) Close()</pre>
+				<p>
+Close shutdown server
+</p>
+
+				
+				
+			
+				
+				<h3 id="Server.ConnectBiDirectionCodec">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=18689:18755#L620">ConnectBiDirectionCodec</a>
+					<a class="permalink" href="#Server.ConnectBiDirectionCodec">¶</a>
+					
+					
+				</h3>
+				<pre>func (server *<a href="#Server">Server</a>) ConnectBiDirectionCodec(codec <a href="#Codec">Codec</a>) *<a href="#Client">Client</a></pre>
+				<p>
+ConnectBiDirectionCodec connects server and conn/codec to remote peer
+for bidirectional rpc. It will serve its registered obj/methods over conn,
+return client for invoking remote services.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Server.DialBiDirection">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=19478:19557#L643">DialBiDirection</a>
+					<a class="permalink" href="#Server.DialBiDirection">¶</a>
+					
+					
+				</h3>
+				<pre>func (server *<a href="#Server">Server</a>) DialBiDirection(network, address <a href="http://localhost:6868/pkg/builtin/#string">string</a>) (*<a href="#Client">Client</a>, <a href="http://localhost:6868/pkg/builtin/#error">error</a>)</pre>
+				<p>
+DialBiDirection connects to remote server and setup bidirection rpc.
+It return client to invoke remote services and serve calls from
+remote client.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Server.HandleHTTP">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=21584:21643#L703">HandleHTTP</a>
 					<a class="permalink" href="#Server.HandleHTTP">¶</a>
 					
 					
@@ -896,7 +1131,7 @@ It is still necessary to invoke http.Serve(), typically in a go statement.
 				
 			
 				
-				<h3 id="Server.Register">func (*Server) <a href="http://localhost:6868/src/net/rpc/server.go?s=6943:6997#L214">Register</a>
+				<h3 id="Server.Register">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=7316:7370#L235">Register</a>
 					<a class="permalink" href="#Server.Register">¶</a>
 					
 					
@@ -922,7 +1157,7 @@ where Type is the receiver's concrete type.
 				
 			
 				
-				<h3 id="Server.RegisterName">func (*Server) <a href="http://localhost:6868/src/net/rpc/server.go?s=7161:7232#L220">RegisterName</a>
+				<h3 id="Server.RegisterName">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=7534:7605#L241">RegisterName</a>
 					<a class="permalink" href="#Server.RegisterName">¶</a>
 					
 					
@@ -937,12 +1172,12 @@ instead of the receiver's concrete type.
 				
 			
 				
-				<h3 id="Server.ServeCodec">func (*Server) <a href="http://localhost:6868/src/net/rpc/server.go?s=13814:13865#L444">ServeCodec</a>
+				<h3 id="Server.ServeCodec">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=12926:12971#L417">ServeCodec</a>
 					<a class="permalink" href="#Server.ServeCodec">¶</a>
 					
 					
 				</h3>
-				<pre>func (server *<a href="#Server">Server</a>) ServeCodec(codec <a href="#ServerCodec">ServerCodec</a>)</pre>
+				<pre>func (server *<a href="#Server">Server</a>) ServeCodec(codec <a href="#Codec">Codec</a>)</pre>
 				<p>
 ServeCodec is like ServeConn but uses the specified codec to
 decode requests and encode responses.
@@ -952,7 +1187,7 @@ decode requests and encode responses.
 				
 			
 				
-				<h3 id="Server.ServeConn">func (*Server) <a href="http://localhost:6868/src/net/rpc/server.go?s=13471:13527#L431">ServeConn</a>
+				<h3 id="Server.ServeConn">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=12717:12773#L411">ServeConn</a>
 					<a class="permalink" href="#Server.ServeConn">¶</a>
 					
 					
@@ -971,7 +1206,7 @@ See NewClient's comment for information about concurrent access.
 				
 			
 				
-				<h3 id="Server.ServeHTTP">func (*Server) <a href="http://localhost:6868/src/net/rpc/server.go?s=20925:20998#L681">ServeHTTP</a>
+				<h3 id="Server.ServeHTTP">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=20593:20666#L676">ServeHTTP</a>
 					<a class="permalink" href="#Server.ServeHTTP">¶</a>
 					
 					
@@ -985,12 +1220,12 @@ ServeHTTP implements an http.Handler that answers RPC requests.
 				
 			
 				
-				<h3 id="Server.ServeRequest">func (*Server) <a href="http://localhost:6868/src/net/rpc/server.go?s=14686:14745#L474">ServeRequest</a>
+				<h3 id="Server.ServeRequest">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=14172:14225#L466">ServeRequest</a>
 					<a class="permalink" href="#Server.ServeRequest">¶</a>
 					
 					
 				</h3>
-				<pre>func (server *<a href="#Server">Server</a>) ServeRequest(codec <a href="#ServerCodec">ServerCodec</a>) <a href="http://localhost:6868/pkg/builtin/#error">error</a></pre>
+				<pre>func (server *<a href="#Server">Server</a>) ServeRequest(codec <a href="#Codec">Codec</a>) <a href="http://localhost:6868/pkg/builtin/#error">error</a></pre>
 				<p>
 ServeRequest is like ServeCodec but synchronously serves a single request.
 It does not close the codec upon completion.
@@ -1002,44 +1237,7 @@ It does not close the codec upon completion.
 		
 			
 			
-			<h2 id="ServerCodec">type <a href="http://localhost:6868/src/net/rpc/server.go?s=19430:19655#L641">ServerCodec</a>
-				<a class="permalink" href="#ServerCodec">¶</a>
-				
-				
-			</h2>
-			<p>
-A ServerCodec implements reading of RPC requests and writing of
-RPC responses for the server side of an RPC session.
-The server calls ReadRequestHeader and ReadRequestBody in pairs
-to read requests from the connection, and it calls WriteResponse to
-write a response back. The server calls Close when finished with the
-connection. ReadRequestBody may be called with a nil
-argument to force the body of the request to be read and discarded.
-See NewClient's comment for information about concurrent access.
-</p>
-
-			<pre>type ServerCodec interface {
-    ReadRequestHeader(*<a href="#Request">Request</a>) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
-    ReadRequestBody(interface{}) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
-    WriteResponse(*<a href="#Response">Response</a>, interface{}) <a href="http://localhost:6868/pkg/builtin/#error">error</a>
-
-    <span class="comment">// Close can be called multiple times and must be idempotent.</span>
-    Close() <a href="http://localhost:6868/pkg/builtin/#error">error</a>
-}</pre>
-
-			
-
-			
-
-			
-
-			
-
-			
-		
-			
-			
-			<h2 id="ServerError">type <a href="http://localhost:6868/src/net/rpc/client.go?s=365:388#L10">ServerError</a>
+			<h2 id="ServerError">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=353:376#L10">ServerError</a>
 				<a class="permalink" href="#ServerError">¶</a>
 				
 				
@@ -1061,7 +1259,7 @@ the remote side of the RPC connection.
 
 			
 				
-				<h3 id="ServerError.Error">func (ServerError) <a href="http://localhost:6868/src/net/rpc/client.go?s=390:425#L12">Error</a>
+				<h3 id="ServerError.Error">func (ServerError) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=378:413#L12">Error</a>
 					<a class="permalink" href="#ServerError.Error">¶</a>
 					
 					
@@ -1079,38 +1277,6 @@ the remote side of the RPC connection.
 
 
 
-
-	
-	
-		<h2 id="pkg-subdirectories">Subdirectories <a class="permalink" href="#pkg-subdirectories">¶</a></h2>
-	
-	<div class="pkg-dir">
-		<table>
-			<tbody><tr>
-				<th class="pkg-name">Name</th>
-				<th class="pkg-synopsis">Synopsis</th>
-			</tr>
-
-			
-			<tr>
-				<td colspan="2"><a href="http://localhost:6868/pkg/net/">..</a></td>
-			</tr>
-			
-
-			
-				<tr>
-				
-					<td class="pkg-name" style="padding-left: 0px;">
-						<a href="http://localhost:6868/pkg/net/rpc/jsonrpc/">jsonrpc</a>
-					</td>
-				
-					<td class="pkg-synopsis">
-						Package jsonrpc implements a JSON-RPC 1.0 ClientCodec and ServerCodec for the rpc package.
-					</td>
-				</tr>
-			
-		</tbody></table>
-	</div>
 
 
 
