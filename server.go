@@ -123,7 +123,8 @@
 	A server implementation will often provide a simple, type-safe wrapper for the
 	client.
 
-	rrpc allows you change to use different encoder/decoder.
+	rrpc allows you use different encoder/decoder for default connection setup process 
+        (Dial, DialHTTP, Accept, HandleHTTP) by setting NewDefaultCodec function.
         The default is Gob encoder/decoder, a JSON based encoder/decoder is provided.
 
         rrpc also supports bidirectional rpc over the same connection,
@@ -132,7 +133,9 @@
 package rrpc
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"go/token"
 	"io"
 	"log"
@@ -141,6 +144,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -153,8 +157,22 @@ const (
 // because Typeof takes an empty interface value. This is annoying.
 var typeOfError = reflect.TypeOf((*error)(nil)).Elem()
 
+type MethodKind byte
+const (
+	Method MethodKind = iota
+	MethodWithContext
+	NumMethodKind
+)
+
+var mKindNames = []string{"Method","MethodWithContext","Undefined"}
+
+func (k MethodKind) String() string {
+	return mKindNames[k]
+}
+
 type methodType struct {
 	sync.Mutex // protects counters
+	methodKind MethodKind
 	method     reflect.Method
 	ArgType    reflect.Type
 	ReplyType  reflect.Type
@@ -307,23 +325,43 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		if method.PkgPath != "" {
 			continue
 		}
-		// Method needs three ins: receiver, *args, *reply.
-		if mtype.NumIn() != 3 {
+		// Two kinds of methods:
+		// normal method needs three ins: receiver, *args, *reply.
+		// method with context has four ins: receiver, context, *args, *reply
+		var mKind MethodKind = Method
+		switch {
+		case mtype.NumIn()==3:
+			mKind=Method
+		case mtype.NumIn()==4:
+			mKind=MethodWithContext
+		default:
 			if reportErr {
-				log.Printf("rpc.Register: method %q has %d input parameters; needs exactly three\n", mname, mtype.NumIn())
+				log.Printf("rpc.Register: method %q has %d input parameters; needs exactly three or four\n", mname, mtype.NumIn())
 			}
 			continue
 		}
-		// First arg need not be a pointer.
-		argType := mtype.In(1)
+		nextArg := 1
+		if mKind == MethodWithContext {
+			arg1Type := mtype.In(nextArg)
+			if arg1Type.Name()!="Context" || arg1Type.PkgPath()!="context" {
+				if reportErr {
+					log.Printf("rpc.Register: first argument type of method with context %q is not context.Context: %q\n", mname, arg1Type)
+				}
+				continue
+			}
+			nextArg++
+		}
+		// Request arg need not be a pointer.
+		argType := mtype.In(nextArg)
 		if !isExportedOrBuiltinType(argType) {
 			if reportErr {
 				log.Printf("rpc.Register: argument type of method %q is not exported: %q\n", mname, argType)
 			}
 			continue
 		}
-		// Second arg must be a pointer.
-		replyType := mtype.In(2)
+		// Reply arg must be a pointer.
+		nextArg++
+		replyType := mtype.In(nextArg)
 		if replyType.Kind() != reflect.Ptr {
 			if reportErr {
 				log.Printf("rpc.Register: reply type of method %q is not a pointer: %q\n", mname, replyType)
@@ -351,7 +389,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 			}
 			continue
 		}
-		methods[mname] = &methodType{method: method, ArgType: argType, ReplyType: replyType}
+		methods[mname] = &methodType{methodKind: mKind, method: method, ArgType: argType, ReplyType: replyType}
 	}
 	return methods
 }
@@ -361,7 +399,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 // contains an error when it is used.
 var invalidRequest = struct{}{}
 
-func (server *Server) sendResponse(sending *sync.Mutex, req *Header, reply interface{}, codec Codec, errmsg string) {
+func (server *Server) sendResponse(conndrv *connDriver, req *Header, reply interface{}, errmsg string) {
 	resp := server.getHeader()
 	// Encode the response header
 	resp.ServiceMethod = req.ServiceMethod
@@ -372,9 +410,9 @@ func (server *Server) sendResponse(sending *sync.Mutex, req *Header, reply inter
 		resp.Info = errmsg
 		reply = invalidRequest
 	}
-	sending.Lock()
-	err := codec.WriteHeaderBody(resp, reply)
-	sending.Unlock()
+	conndrv.wlock.Lock()
+	err := conndrv.codec.WriteHeaderBody(resp, reply)
+	conndrv.wlock.Unlock()
 	if debugLog {
 		if err != nil {
 			log.Println("rpc: fail writing response:", err)
@@ -392,23 +430,30 @@ func (m *methodType) NumCalls() (n uint) {
 	return n
 }
 
-func (s *service) call(server *Server, sending *sync.Mutex, wg *sync.WaitGroup, mtype *methodType, req *Header, argv, replyv reflect.Value, codec Codec) {
-	if wg != nil {
-		defer wg.Done()
-	}
+func (s *service) call(server *Server, conndrv *connDriver, mtype *methodType, req *Header, argv, replyv reflect.Value) {
+	defer conndrv.wg.Done()
 	mtype.Lock()
 	mtype.numCalls++
 	mtype.Unlock()
 	function := mtype.method.Func
+	var returnValues []reflect.Value
 	// Invoke the method, providing a new value for the reply.
-	returnValues := function.Call([]reflect.Value{s.rcvr, argv, replyv})
+	if mtype.methodKind==MethodWithContext {
+		ctxVal := reflect.ValueOf(req.Info)
+		returnValues = function.Call([]reflect.Value{s.rcvr, ctxVal, argv, replyv})
+	} else /*if mtype.methodKind==Method*/ {
+		returnValues = function.Call([]reflect.Value{s.rcvr, argv, replyv})
+	}
 	// The return value for the method is an error.
 	errInter := returnValues[0].Interface()
 	errmsg := ""
 	if errInter != nil {
 		errmsg = errInter.(error).Error()
 	}
-	server.sendResponse(sending, req, replyv.Interface(), codec, errmsg)
+	server.sendResponse(conndrv, req, replyv.Interface(), errmsg)
+	if mtype.methodKind==MethodWithContext {
+		conndrv.RemoveCall(req.Seq)
+	}
 	server.freeHeader(req)
 }
 
@@ -432,10 +477,6 @@ func (server *Server) ServeCodec(codec Codec) {
 
 // handleRequest handles one request forwarded from connDriver
 func (server *Server) handleRequest(conndrv *connDriver, req *Header) error {
-	sending := conndrv.wlock
-	wg := conndrv.wg
-	codec := conndrv.codec
-
 	if debugLog {
 		log.Printf("%p srv recv: %s\n", server, req)
 	}
@@ -446,35 +487,59 @@ func (server *Server) handleRequest(conndrv *connDriver, req *Header) error {
 		if debugLog {
 			log.Println("srv: discard Body")
 		}
-		codec.ReadBody(nil)
-		server.sendResponse(sending, req, invalidRequest, codec, err.Error())
+		conndrv.codec.ReadBody(nil)
+		server.sendResponse(conndrv, req, invalidRequest, err.Error())
 		server.freeHeader(req)
-		if debugLog && err != io.EOF {
-			log.Println("rpc01:", err)
-		}
 		return err
 	}
 
-	argv, replyv, err := server.readRequestBody(codec, service, mtype, req)
+	argv, replyv, err := server.readRequestBody(conndrv.codec, service, mtype, req)
 
 	if err != nil {
-		server.sendResponse(sending, req, invalidRequest, codec, err.Error())
+		server.sendResponse(conndrv, req, invalidRequest, err.Error())
 		server.freeHeader(req)
-		if debugLog && err != io.EOF {
-			log.Println("rpc02:", err)
-		}
 		return err
 	}
 
-	wg.Add(1)
-	go service.call(server, sending, wg, mtype, req, argv, replyv, codec)
+	if mtype.methodKind == MethodWithContext {
+		cancel,err := setupCallContext(req)
+		if err!=nil {
+			if debugLog {
+				log.Println(err.Error())
+			}
+			return err
+		}
+		conndrv.AddCall(req.Seq,cancel)
+	}
+
+	conndrv.wg.Add(1)
+	go service.call(server, conndrv, mtype, req, argv, replyv)
 	return nil
+}
+
+func setupCallContext(req *Header) (cancel context.CancelFunc, err error) {
+	deadline, err := time.Parse(time.RFC3339, req.Info.(string))
+	if err!=nil {
+		err = fmt.Errorf("failed to parse deadline time: %v, %v", err, req.Info)
+		return
+	}
+	var ctx context.Context
+	if deadline.IsZero() {
+		ctx, cancel = context.WithCancel(context.Background())
+	} else {
+		ctx, cancel = context.WithDeadline(context.Background(), deadline)
+	}
+	req.Info = ctx  //pack ctx for use inside call
+	return
 }
 
 // ServeRequest is like ServeCodec but synchronously serves a single request.
 // It does not close the codec upon completion.
 func (server *Server) ServeRequest(codec Codec) error {
-	sending := new(sync.Mutex)
+	//create a temp connDriver for one time use
+	//possible race if same codec/connection used in diff connDriver
+	tmpConnDrv := newConnDriver(codec)
+	tmpConnDrv.server=server
 	req, err := server.readRequestHeader(codec)
 	if err != nil {
 		server.freeHeader(req)
@@ -488,7 +553,7 @@ func (server *Server) ServeRequest(codec Codec) error {
 			log.Println("srv: discard Body")
 		}
 		codec.ReadBody(nil)
-		server.sendResponse(sending, req, invalidRequest, codec, err.Error())
+		server.sendResponse(tmpConnDrv, req, invalidRequest, err.Error())
 		server.freeHeader(req)
 		return err
 	}
@@ -496,11 +561,24 @@ func (server *Server) ServeRequest(codec Codec) error {
 	argv, replyv, err := server.readRequestBody(codec, service, mtype, req)
 
 	if err != nil {
-		server.sendResponse(sending, req, invalidRequest, codec, err.Error())
+		server.sendResponse(tmpConnDrv, req, invalidRequest, err.Error())
 		server.freeHeader(req)
 		return err
 	}
-	service.call(server, sending, nil, mtype, req, argv, replyv, codec)
+	
+	if mtype.methodKind == MethodWithContext {
+		cancel,err := setupCallContext(req)
+		if err!=nil {
+			if debugLog {
+				log.Println(err.Error())
+			}
+			return err
+		}
+		tmpConnDrv.AddCall(req.Seq,cancel)
+	}
+
+	tmpConnDrv.wg.Add(1) //just for keep call() api consistent
+	service.call(server, tmpConnDrv, mtype, req, argv, replyv)
 	return nil
 }
 

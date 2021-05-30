@@ -1,6 +1,7 @@
 package rrpc
 
 import (
+	"context"
 	"errors"
 	"io"
 	"log"
@@ -12,17 +13,17 @@ type connDriver struct {
 	server *Server
 	client *Client
 	//codec write lock
-	wlock *sync.Mutex
+	wlock sync.Mutex
 	codec Codec
 	//wait group for outstanding calls to server
-	wg *sync.WaitGroup
+	wg sync.WaitGroup
+	callLock sync.Mutex
+	actCalls map[uint64]context.CancelFunc
 }
 
 func newConnDriver(codec Codec) *connDriver {
 	return &connDriver{
 		codec: codec,
-		wlock: new(sync.Mutex),
-		wg:    new(sync.WaitGroup),
 	}
 }
 
@@ -32,10 +33,33 @@ func (cd *connDriver) Close() error {
 	return cd.codec.Close()
 }
 
+func (cd *connDriver) AddCall(seq uint64, cancel context.CancelFunc) {
+	cd.callLock.Lock()
+	cd.actCalls[seq]=cancel
+	cd.callLock.Unlock()
+}
+
+func (cd *connDriver) CancelCall(seq uint64) {
+	cd.callLock.Lock()
+	cancel := cd.actCalls[seq]
+	cd.callLock.Unlock()
+	if cancel!=nil {
+		cancel()
+	}
+}
+
+func (cd *connDriver) RemoveCall(seq uint64) {
+	cd.callLock.Lock()
+	cancel := cd.actCalls[seq]
+	cd.callLock.Unlock()
+	if cancel!=nil {
+		cancel()
+	}
+}
+
+
+
 func (cd *connDriver) Loop() {
-	//if debugLog {
-	//log.Println("Loop() start, server=",cd.server,", client=",cd.client)
-	//}
 	if cd.server != nil {
 		//register active codec/connDriver with server
 		cd.server.connLock.Lock()
@@ -77,10 +101,6 @@ func (cd *connDriver) Loop() {
 				if err != nil && debugLog {
 					log.Println("rpc:", err)
 				}
-				//keep working incase of handling error
-				//if err!=nil {
-				//	break
-				//}
 				//since header is freed inside server.handleRequest
 				//allocate a new header
 				header = cd.server.getHeader()

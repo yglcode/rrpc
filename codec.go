@@ -19,7 +19,7 @@ const (
 	NumKind
 )
 
-var kindNames = []string{"req", "resp", "error", "undefined"}
+var kindNames = []string{"Request", "Response", "Error", "Undefined"}
 
 func (k Kind) String() string {
 	return kindNames[k]
@@ -46,18 +46,18 @@ type Codec interface {
 	ReadBody(body interface{}) error
 }
 
-type Encoder interface {
+type encoder interface {
 	Encode(interface{}) error
 }
 
-type Decoder interface {
+type decoder interface {
 	Decode(interface{}) error
 }
 
 type codec struct {
 	rwc    io.ReadWriteCloser
-	dec    Decoder
-	enc    Encoder
+	dec    decoder
+	enc    encoder
 	encBuf *bufio.Writer
 	closed bool
 }
@@ -135,11 +135,11 @@ func (c *codec) Close() error {
 	return c.rwc.Close()
 }
 
-func newJsonEncoder(w io.Writer) Encoder {
+func newJsonEncoder(w io.Writer) encoder {
 	return json.NewEncoder(w)
 }
 
-func newJsonDecoder(r io.Reader) Decoder {
+func newJsonDecoder(r io.Reader) decoder {
 	dec := &discardJsonDecoder{json.NewDecoder(r)}
 	dec.DisallowUnknownFields()
 	return dec
