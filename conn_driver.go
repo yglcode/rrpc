@@ -16,14 +16,15 @@ type connDriver struct {
 	wlock sync.Mutex
 	codec Codec
 	//wait group for outstanding calls to server
-	wg sync.WaitGroup
+	wg       sync.WaitGroup
 	callLock sync.Mutex
 	actCalls map[uint64]context.CancelFunc
 }
 
 func newConnDriver(codec Codec) *connDriver {
 	return &connDriver{
-		codec: codec,
+		codec:    codec,
+		actCalls: make(map[uint64]context.CancelFunc),
 	}
 }
 
@@ -35,7 +36,7 @@ func (cd *connDriver) Close() error {
 
 func (cd *connDriver) AddCall(seq uint64, cancel context.CancelFunc) {
 	cd.callLock.Lock()
-	cd.actCalls[seq]=cancel
+	cd.actCalls[seq] = cancel
 	cd.callLock.Unlock()
 }
 
@@ -43,7 +44,7 @@ func (cd *connDriver) CancelCall(seq uint64) {
 	cd.callLock.Lock()
 	cancel := cd.actCalls[seq]
 	cd.callLock.Unlock()
-	if cancel!=nil {
+	if cancel != nil {
 		cancel()
 	}
 }
@@ -52,12 +53,10 @@ func (cd *connDriver) RemoveCall(seq uint64) {
 	cd.callLock.Lock()
 	cancel := cd.actCalls[seq]
 	cd.callLock.Unlock()
-	if cancel!=nil {
+	if cancel != nil {
 		cancel()
 	}
 }
-
-
 
 func (cd *connDriver) Loop() {
 	if cd.server != nil {
@@ -94,7 +93,7 @@ func (cd *connDriver) Loop() {
 			}
 			break
 		}
-		if header.Kind == Request {
+		if header.Kind == Request || header.Kind == RequestWithContext || header.Kind == Cancel {
 			// Forward requests to server
 			if cd.server != nil {
 				err = cd.server.handleRequest(cd, header)

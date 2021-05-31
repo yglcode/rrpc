@@ -7,12 +7,14 @@ package rrpc
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"sync"
+	"time"
 )
 
 // ServerError represents an error that has been returned from
@@ -27,11 +29,13 @@ var ErrShutdown = errors.New("connection is shut down")
 
 // Call represents an active RPC.
 type Call struct {
-	ServiceMethod string      // The name of the service and method to call.
-	Args          interface{} // The argument to the function (*struct).
-	Reply         interface{} // The reply from the function (*struct).
-	Error         error       // After completion, the error status.
-	Done          chan *Call  // Receives *Call when Go is complete.
+	ServiceMethod   string          // The name of the service and method to call.
+	Args            interface{}     // The argument to the function (*struct).
+	Reply           interface{}     // The reply from the function (*struct).
+	Error           error           // After completion, the error status.
+	Done            chan *Call      // Receives *Call when Go is complete.
+	ctx             context.Context //If not nil, RPC will be run with context Ctx
+	ctxCancelerStop chan struct{}   //Context cancel watcher exit signal
 }
 
 // Client represents an RPC Client.
@@ -59,6 +63,8 @@ func newClient(cdrv *connDriver) *Client {
 }
 
 func (client *Client) send(call *Call) {
+	isCancel := call.Reply == nil && call.ServiceMethod == "cancel"
+
 	client.reqMutex.Lock()
 	defer client.reqMutex.Unlock()
 
@@ -75,12 +81,29 @@ func (client *Client) send(call *Call) {
 	}
 	seq := client.seq
 	client.seq++
-	client.pending[seq] = call
+	if !isCancel {
+		//Cancel is oneway
+		client.pending[seq] = call
+	}
 	client.mutex.Unlock()
 
 	// Encode and send the request.
 	client.header.Seq = seq
 	client.header.Kind = Request
+	if isCancel {
+		client.header.Kind = Cancel
+		//send call seq number to be canceled in header.Info
+		client.header.Info = call.Args
+		call.Args = emptyBody
+	} else if call.ctx != nil {
+		client.header.Kind = RequestWithContext
+		deadline, hasDeadline := call.ctx.Deadline()
+		if !hasDeadline {
+			deadline = time.Time{} //set it to zero val
+		}
+		//pass deadline info thru Header
+		client.header.Info = deadline.Format(time.RFC3339)
+	}
 	client.header.ServiceMethod = call.ServiceMethod
 	if debugLog {
 		log.Printf("%p cli send req: %s\n", client, &client.header)
@@ -93,15 +116,39 @@ func (client *Client) send(call *Call) {
 			log.Printf("fail to send req: %s, err: %s\n", &client.header, err)
 		}
 		client.mutex.Lock()
-		call = client.pending[seq]
+		//call = client.pending[seq]
 		delete(client.pending, seq)
 		client.mutex.Unlock()
-		if call != nil {
-			call.Error = err
-			call.done()
-		}
+		//if call != nil {
+		call.Error = err
+		call.done()
+		//}
+	} else if isCancel {
+		//since no one will handle cancel msg failure
+		//just return right away
+		call.done()
+	}
+	//for method-call with context, monitor its cancel signal
+	if call.ctx != nil && call.ctx.Done() != nil {
+		ctxDoneChan := call.ctx.Done()
+		go func() {
+			//wait for cancel signal
+			//it could comes from local cancel or remote completion
+			select {
+			case <-ctxDoneChan:
+				//local cancelation, send cancel msg
+				client.Call("cancel", seq, nil)
+			case <-call.ctxCancelerStop:
+				//completion, just exit
+				if debugLog {
+					log.Println("job complete, canceler exit")
+				}
+			}
+		}()
 	}
 }
+
+var emptyBody = struct{}{}
 
 // handleResponse handles one response/error forwarded by connDriver
 func (client *Client) handleResponse(codec Codec, header *Header) (err error) {
@@ -138,11 +185,19 @@ func (client *Client) handleResponse(codec Codec, header *Header) (err error) {
 		if err != nil {
 			err = errors.New("reading error body: " + err.Error())
 		}
+		if call.ctxCancelerStop != nil {
+			//let context cancel watcher exit
+			close(call.ctxCancelerStop)
+		}
 		call.done()
 	default:
 		err = codec.ReadBody(call.Reply)
 		if err != nil {
 			call.Error = errors.New("reading body " + err.Error())
+		}
+		if call.ctxCancelerStop != nil {
+			//let context cancel watcher exit
+			close(call.ctxCancelerStop)
 		}
 		call.done()
 	}
@@ -252,6 +307,41 @@ func (client *Client) Go(serviceMethod string, args interface{}, reply interface
 // Call invokes the named function, waits for it to complete, and returns its error status.
 func (client *Client) Call(serviceMethod string, args interface{}, reply interface{}) error {
 	call := <-client.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
+	return call.Error
+}
+
+// GoWithContext invokes the function asynchronously. It returns the Call structure representing
+// the invocation. The done channel will signal when the call is complete by returning
+// the same Call object. If done is nil, Go will allocate a new channel.
+// If non-nil, done must be buffered or Go will deliberately crash.
+// A context.Context object is passed to support timeout and cancelation.
+func (client *Client) GoWithContext(serviceMethod string, ctx context.Context, args interface{}, reply interface{}, done chan *Call) *Call {
+	call := new(Call)
+	call.ServiceMethod = serviceMethod
+	call.ctx = ctx
+	call.ctxCancelerStop = make(chan struct{})
+	call.Args = args
+	call.Reply = reply
+	if done == nil {
+		done = make(chan *Call, 10) // buffered.
+	} else {
+		// If caller passes done != nil, it must arrange that
+		// done has enough buffer for the number of simultaneous
+		// RPCs that will be using that channel. If the channel
+		// is totally unbuffered, it's best not to run at all.
+		if cap(done) == 0 {
+			log.Panic("rpc: done channel is unbuffered")
+		}
+	}
+	call.Done = done
+	client.send(call)
+	return call
+}
+
+// CallWithContext invokes the named function, waits for it to complete, and returns its error status.
+// A context.Context object is passed to support timeout and cancelation.
+func (client *Client) CallWithContext(serviceMethod string, ctx context.Context, args interface{}, reply interface{}) error {
+	call := <-client.GoWithContext(serviceMethod, ctx, args, reply, make(chan *Call, 1)).Done
 	return call.Error
 }
 

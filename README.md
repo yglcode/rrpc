@@ -12,6 +12,12 @@ This is a fork of the originial Go net/rpc code for some rework/enhancements:
 
     * There are both client and server at each end of a connection.
 
+* support method cancelation and timeout thru context.Context: CallWithContext() and GoWithContext().
 
-[godoc](./godoc/doc.html).
+    * only deadline and cancelation signal are propagated to from client to server, no context values.
+
+
+
+
+[godoc](https://pkg.go.dev/github.com/yglcode/rrpc).
 

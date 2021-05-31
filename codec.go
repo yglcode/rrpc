@@ -14,12 +14,14 @@ type Kind byte
 
 const (
 	Request Kind = iota
+	RequestWithContext
 	Response
+	Cancel
 	Error
 	NumKind
 )
 
-var kindNames = []string{"Request", "Response", "Error", "Undefined"}
+var kindNames = []string{"Request", "RequestWithContext", "Response", "Cancel", "Error", "Undefined"}
 
 func (k Kind) String() string {
 	return kindNames[k]
