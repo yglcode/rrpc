@@ -7,8 +7,8 @@
 
   <title>rrpc - The Go Programming Language</title>
 
-<link href="doc_files/css.css" rel="stylesheet">
 <link href="doc_files/css_002.css" rel="stylesheet">
+<link href="doc_files/css.css" rel="stylesheet">
 <link type="text/css" rel="stylesheet" href="doc_files/style.css">
 
 <script>window.initFuncs = [];</script>
@@ -224,7 +224,9 @@
         rrpc adds support for RPC call timeout and cancelation through context.
         The service object could expose methods with context.Context as 1st argument, and
         can check for timeout/cancelation signal:
-              func (t *ArithCtx) AddWithContext(ctx context.Context, args Args, reply *Reply) (err error) {
+
+              func (t *ArithCtx) AddWithContext(ctx context.Context, args Args, reply *Reply)
+        (err error) {
 	           reply.C = args.A + args.B
 		   select {
 		   case &lt;-ctx.Done():
@@ -232,10 +234,15 @@
 			return err
                    ...
               }
-        Clients can invoke it using CallWithContext and GoWithContext with a context object:
-              client.GoWithContext("Arith.AddWithContext", ctx, args, reply, nil)
-              client.CallWithContext("Arith.AddWithContext", ctx, args, reply)
-        Cancelation and timeout are propogated from Clients to Service methods.
+
+        Clients can invoke it using CallWithContext and GoWithContext with a Context object:
+
+              client.GoWithContext("Arith.AddWithContext", context, args, reply, nil)
+              client.CallWithContext("Arith.AddWithContext", context, args, reply)
+
+        Clients create a Context object with Timeout or Deadline and pass it to above methods.
+        Clients can invoke context's cancel() function to ask service methods cancel and return.
+        Cancelation and Deadline are propogated from Clients to Service methods.
 
 	rrpc allows you use different encoder/decoder for default connection setup process
         (Dial, DialHTTP, Accept, HandleHTTP) by setting NewDefaultCodec function.
@@ -482,7 +489,7 @@ DefaultServer is the default instance of *Server.
 		
 			
 			
-			<h2 id="Accept">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=24798:24827#L818">Accept</a>
+			<h2 id="Accept">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=25011:25040#L825">Accept</a>
 				<a class="permalink" href="#Accept">¶</a>
 				
 				
@@ -499,7 +506,7 @@ Accept blocks; the caller typically invokes it in a go statement.
 		
 			
 			
-			<h2 id="HandleHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=26377:26394#L859">HandleHTTP</a>
+			<h2 id="HandleHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=26590:26607#L866">HandleHTTP</a>
 				<a class="permalink" href="#HandleHTTP">¶</a>
 				
 				
@@ -516,7 +523,7 @@ It is still necessary to invoke http.Serve(), typically in a go statement.
 		
 			
 			
-			<h2 id="Register">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=21786:21823#L735">Register</a>
+			<h2 id="Register">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=21999:22036#L742">Register</a>
 				<a class="permalink" href="#Register">¶</a>
 				
 				
@@ -531,7 +538,7 @@ Register publishes the receiver's methods in the DefaultServer.
 		
 			
 			
-			<h2 id="RegisterName">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=21982:22036#L739">RegisterName</a>
+			<h2 id="RegisterName">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=22195:22249#L746">RegisterName</a>
 				<a class="permalink" href="#RegisterName">¶</a>
 				
 				
@@ -547,7 +554,7 @@ instead of the receiver's concrete type.
 		
 			
 			
-			<h2 id="ServeCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=22651:22679#L755">ServeCodec</a>
+			<h2 id="ServeCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=22864:22892#L762">ServeCodec</a>
 				<a class="permalink" href="#ServeCodec">¶</a>
 				
 				
@@ -563,7 +570,7 @@ decode requests and encode responses.
 		
 			
 			
-			<h2 id="ServeConn">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=22470:22509#L749">ServeConn</a>
+			<h2 id="ServeConn">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=22683:22722#L756">ServeConn</a>
 				<a class="permalink" href="#ServeConn">¶</a>
 				
 				
@@ -583,7 +590,7 @@ See NewClient's comment for information about concurrent access.
 		
 			
 			
-			<h2 id="ServeRequest">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=22844:22880#L761">ServeRequest</a>
+			<h2 id="ServeRequest">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=23057:23093#L768">ServeRequest</a>
 				<a class="permalink" href="#ServeRequest">¶</a>
 				
 				
@@ -656,7 +663,7 @@ multiple goroutines simultaneously.
 
 			
 				
-				<h3 id="AcceptBiDirection">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=26923:26980#L871">AcceptBiDirection</a>
+				<h3 id="AcceptBiDirection">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=27136:27193#L878">AcceptBiDirection</a>
 					<a class="permalink" href="#AcceptBiDirection">¶</a>
 					
 					
@@ -670,7 +677,7 @@ invoke remote services and serve calls from remote client with DefaultServer
 				
 			
 				
-				<h3 id="Dial">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=11393:11444#L372">Dial</a>
+				<h3 id="Dial">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=11471:11522#L375">Dial</a>
 					<a class="permalink" href="#Dial">¶</a>
 					
 					
@@ -683,7 +690,7 @@ Dial connects to an RPC server at the specified network address.
 				
 			
 				
-				<h3 id="DialBiDirection">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=26629:26691#L865">DialBiDirection</a>
+				<h3 id="DialBiDirection">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=26842:26904#L872">DialBiDirection</a>
 					<a class="permalink" href="#DialBiDirection">¶</a>
 					
 					
@@ -697,7 +704,7 @@ invoke remote services and serve calls from remote client with DefaultServer
 				
 			
 				
-				<h3 id="DialHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=10461:10516#L340">DialHTTP</a>
+				<h3 id="DialHTTP">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=10539:10594#L343">DialHTTP</a>
 					<a class="permalink" href="#DialHTTP">¶</a>
 					
 					
@@ -711,7 +718,7 @@ listening on the default HTTP RPC path.
 				
 			
 				
-				<h3 id="DialHTTPPath">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=10670:10735#L346">DialHTTPPath</a>
+				<h3 id="DialHTTPPath">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=10748:10813#L349">DialHTTPPath</a>
 					<a class="permalink" href="#DialHTTPPath">¶</a>
 					
 					
@@ -725,7 +732,7 @@ at the specified network address and path.
 				
 			
 				
-				<h3 id="NewClient">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=6348:6395#L222">NewClient</a>
+				<h3 id="NewClient">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=6319:6366#L221">NewClient</a>
 					<a class="permalink" href="#NewClient">¶</a>
 					
 					
@@ -747,7 +754,7 @@ concurrent reads or concurrent writes.
 				
 			
 				
-				<h3 id="NewClientWithCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=6564:6608#L228">NewClientWithCodec</a>
+				<h3 id="NewClientWithCodec">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=6535:6579#L227">NewClientWithCodec</a>
 					<a class="permalink" href="#NewClientWithCodec">¶</a>
 					
 					
@@ -763,7 +770,7 @@ codec to encode requests and decode responses.
 
 			
 				
-				<h3 id="Client.Call">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=8611:8702#L298">Call</a>
+				<h3 id="Client.Call">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=8689:8780#L301">Call</a>
 					<a class="permalink" href="#Client.Call">¶</a>
 					
 					
@@ -777,7 +784,7 @@ Call invokes the named function, waits for it to complete, and returns its error
 				
 			
 				
-				<h3 id="Client.CallWithContext">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=10103:10226#L333">CallWithContext</a>
+				<h3 id="Client.CallWithContext">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=10181:10304#L336">CallWithContext</a>
 					<a class="permalink" href="#Client.CallWithContext">¶</a>
 					
 					
@@ -792,7 +799,7 @@ A context.Context object is passed to support timeout and cancelation.
 				
 			
 				
-				<h3 id="Client.Close">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=6850:6885#L237">Close</a>
+				<h3 id="Client.Close">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=6821:6856#L236">Close</a>
 					<a class="permalink" href="#Client.Close">¶</a>
 					
 					
@@ -807,7 +814,7 @@ shutting down, ErrShutdown is returned.
 				
 			
 				
-				<h3 id="Client.Go">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=7886:7992#L276">Go</a>
+				<h3 id="Client.Go">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=7964:8070#L279">Go</a>
 					<a class="permalink" href="#Client.Go">¶</a>
 					
 					
@@ -824,7 +831,7 @@ If non-nil, done must be buffered or Go will deliberately crash.
 				
 			
 				
-				<h3 id="Client.GoWithContext">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=9201:9339#L308">GoWithContext</a>
+				<h3 id="Client.GoWithContext">func (*Client) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/client.go?s=9279:9417#L311">GoWithContext</a>
 					<a class="permalink" href="#Client.GoWithContext">¶</a>
 					
 					
@@ -1014,7 +1021,7 @@ Kind is the kind of messages sent/recv thru codec
 		
 			
 			
-			<h2 id="MethodKind">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5787:5807#L166">MethodKind</a>
+			<h2 id="MethodKind">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=6000:6020#L173">MethodKind</a>
 				<a class="permalink" href="#MethodKind">¶</a>
 				
 				
@@ -1039,7 +1046,7 @@ Kind is the kind of messages sent/recv thru codec
 
 			
 				
-				<h3 id="MethodKind.String">func (MethodKind) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=5951:5986#L176">String</a>
+				<h3 id="MethodKind.String">func (MethodKind) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=6164:6199#L183">String</a>
 					<a class="permalink" href="#MethodKind.String">¶</a>
 					
 					
@@ -1052,7 +1059,7 @@ Kind is the kind of messages sent/recv thru codec
 		
 			
 			
-			<h2 id="Server">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=6481:6726#L197">Server</a>
+			<h2 id="Server">type <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=6694:6939#L204">Server</a>
 				<a class="permalink" href="#Server">¶</a>
 				
 				
@@ -1074,7 +1081,7 @@ Server represents an RPC Server.
 
 			
 				
-				<h3 id="NewServer">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=6763:6787#L208">NewServer</a>
+				<h3 id="NewServer">func <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=6976:7000#L215">NewServer</a>
 					<a class="permalink" href="#NewServer">¶</a>
 					
 					
@@ -1089,7 +1096,7 @@ NewServer returns a new Server.
 
 			
 				
-				<h3 id="Server.Accept">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=24415:24461#L804">Accept</a>
+				<h3 id="Server.Accept">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=24628:24674#L811">Accept</a>
 					<a class="permalink" href="#Server.Accept">¶</a>
 					
 					
@@ -1106,7 +1113,7 @@ go statement.
 				
 			
 				
-				<h3 id="Server.AcceptBiDirection">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=23493:23567#L779">AcceptBiDirection</a>
+				<h3 id="Server.AcceptBiDirection">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=23706:23780#L786">AcceptBiDirection</a>
 					<a class="permalink" href="#Server.AcceptBiDirection">¶</a>
 					
 					
@@ -1122,7 +1129,7 @@ remote client.
 				
 			
 				
-				<h3 id="Server.Close">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=7169:7193#L223">Close</a>
+				<h3 id="Server.Close">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=7382:7406#L230">Close</a>
 					<a class="permalink" href="#Server.Close">¶</a>
 					
 					
@@ -1136,7 +1143,7 @@ Close shutdown server
 				
 			
 				
-				<h3 id="Server.ConnectBiDirectionCodec">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=23126:23192#L768">ConnectBiDirectionCodec</a>
+				<h3 id="Server.ConnectBiDirectionCodec">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=23339:23405#L775">ConnectBiDirectionCodec</a>
 					<a class="permalink" href="#Server.ConnectBiDirectionCodec">¶</a>
 					
 					
@@ -1152,7 +1159,7 @@ return client for invoking remote services.
 				
 			
 				
-				<h3 id="Server.DialBiDirection">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=23915:23994#L791">DialBiDirection</a>
+				<h3 id="Server.DialBiDirection">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=24128:24207#L798">DialBiDirection</a>
 					<a class="permalink" href="#Server.DialBiDirection">¶</a>
 					
 					
@@ -1168,7 +1175,7 @@ remote client.
 				
 			
 				
-				<h3 id="Server.HandleHTTP">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=26021:26080#L851">HandleHTTP</a>
+				<h3 id="Server.HandleHTTP">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=26234:26293#L858">HandleHTTP</a>
 					<a class="permalink" href="#Server.HandleHTTP">¶</a>
 					
 					
@@ -1184,7 +1191,7 @@ It is still necessary to invoke http.Serve(), typically in a go statement.
 				
 			
 				
-				<h3 id="Server.Register">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=8511:8565#L270">Register</a>
+				<h3 id="Server.Register">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=8724:8778#L277">Register</a>
 					<a class="permalink" href="#Server.Register">¶</a>
 					
 					
@@ -1210,7 +1217,7 @@ where Type is the receiver's concrete type.
 				
 			
 				
-				<h3 id="Server.RegisterName">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=8729:8800#L276">RegisterName</a>
+				<h3 id="Server.RegisterName">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=8942:9013#L283">RegisterName</a>
 					<a class="permalink" href="#Server.RegisterName">¶</a>
 					
 					
@@ -1225,7 +1232,7 @@ instead of the receiver's concrete type.
 				
 			
 				
-				<h3 id="Server.ServeCodec">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=15018:15063#L479">ServeCodec</a>
+				<h3 id="Server.ServeCodec">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=15231:15276#L486">ServeCodec</a>
 					<a class="permalink" href="#Server.ServeCodec">¶</a>
 					
 					
@@ -1240,7 +1247,7 @@ decode requests and encode responses.
 				
 			
 				
-				<h3 id="Server.ServeConn">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=14809:14865#L473">ServeConn</a>
+				<h3 id="Server.ServeConn">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=15022:15078#L480">ServeConn</a>
 					<a class="permalink" href="#Server.ServeConn">¶</a>
 					
 					
@@ -1259,7 +1266,7 @@ See NewClient's comment for information about concurrent access.
 				
 			
 				
-				<h3 id="Server.ServeHTTP">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=25030:25103#L824">ServeHTTP</a>
+				<h3 id="Server.ServeHTTP">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=25243:25316#L831">ServeHTTP</a>
 					<a class="permalink" href="#Server.ServeHTTP">¶</a>
 					
 					
@@ -1273,7 +1280,7 @@ ServeHTTP implements an http.Handler that answers RPC requests.
 				
 			
 				
-				<h3 id="Server.ServeRequest">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17587:17640#L576">ServeRequest</a>
+				<h3 id="Server.ServeRequest">func (*Server) <a href="http://localhost:6868/src/github.com/yglcode/rrpc/server.go?s=17800:17853#L583">ServeRequest</a>
 					<a class="permalink" href="#Server.ServeRequest">¶</a>
 					
 					

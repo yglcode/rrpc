@@ -130,12 +130,11 @@ func (client *Client) send(call *Call) {
 	}
 	//for method-call with context, monitor its cancel signal
 	if call.ctx != nil && call.ctx.Done() != nil {
-		ctxDoneChan := call.ctx.Done()
 		go func() {
 			//wait for cancel signal
 			//it could comes from local cancel or remote completion
 			select {
-			case <-ctxDoneChan:
+			case <-call.ctx.Done():
 				//local cancelation, send cancel msg
 				client.Call("cancel", seq, nil)
 			case <-call.ctxCancelerStop:
@@ -270,6 +269,10 @@ func (client *Client) connShutdown(err error) {
 	}
 	for _, call := range client.pending {
 		call.Error = err
+		if call.ctxCancelerStop != nil {
+			//let context cancel watcher exit
+			close(call.ctxCancelerStop)
+		}
 		call.done()
 	}
 	client.mutex.Unlock()

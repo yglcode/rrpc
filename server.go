@@ -126,7 +126,9 @@
         rrpc adds support for RPC call timeout and cancelation through context.
         The service object could expose methods with context.Context as 1st argument, and
         can check for timeout/cancelation signal:
-              func (t *ArithCtx) AddWithContext(ctx context.Context, args Args, reply *Reply) (err error) {
+
+              func (t *ArithCtx) AddWithContext(ctx context.Context, args Args, reply *Reply)
+        (err error) {
 	           reply.C = args.A + args.B
 		   select {
 		   case <-ctx.Done():
@@ -134,10 +136,15 @@
 			return err
                    ...
               }
-        Clients can invoke it using CallWithContext and GoWithContext with a context object:
-              client.GoWithContext("Arith.AddWithContext", ctx, args, reply, nil)
-              client.CallWithContext("Arith.AddWithContext", ctx, args, reply)
-        Cancelation and timeout are propogated from Clients to Service methods.
+
+        Clients can invoke it using CallWithContext and GoWithContext with a Context object:
+
+              client.GoWithContext("Arith.AddWithContext", context, args, reply, nil)
+              client.CallWithContext("Arith.AddWithContext", context, args, reply)
+
+        Clients create a Context object with Timeout or Deadline and pass it to above methods.
+        Clients can invoke context's cancel() function to ask service methods cancel and return.
+        Cancelation and Deadline are propogated from Clients to Service methods.
 
 	rrpc allows you use different encoder/decoder for default connection setup process
         (Dial, DialHTTP, Accept, HandleHTTP) by setting NewDefaultCodec function.
