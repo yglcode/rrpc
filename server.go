@@ -4,8 +4,10 @@
 
 /*
         Package rrpc is a fork of standard library net/rpc, which has been frozen. While
-        original net/rpc API and major implementation are untouched, rrpc adds some rework 
+        original net/rpc API and major implementation are untouched, rrpc adds some rework
         and enhancements listed below. User code could stay the same and use new features.
+        However because of change to message Header, it cannot interoperate with net/rpc,
+        thus uses a new name.
 
         net/rpc original doc:
 
@@ -134,8 +136,8 @@
         The service object could expose methods with context.Context as 1st argument, and
         can check for timeout/cancelation signal:
 
-              func (t *ArithCtx) AddWithContext(ctx context.Context, args Args, reply *Reply)
-        (err error) {
+              func (t *Arith) AddWithContext(ctx context.Context, args Args, reply *Reply)
+        error {
 	           reply.C = args.A + args.B
 		   select {
 		   case <-ctx.Done():
@@ -149,16 +151,18 @@
               client.GoWithContext("Arith.AddWithContext", context, args, reply, nil)
               client.CallWithContext("Arith.AddWithContext", context, args, reply)
 
-        Clients can create a Context object with Timeout or Deadline and pass it to above methods,
-        and/or invoke context's cancel() function to ask service methods stop and return early.
-        Cancelation and Deadline are propogated from Clients to Service methods, but not context values.
+        Clients can create a Context object with Timeout or Deadline and pass it to above
+        methods, or invoke context's cancel() function to ask service methods stop and return
+        early. Cancelation and Deadline are propogated from Clients to Service methods,
+        but not context values.
 
         rrpc allows you use different encoder/decoder for default connection setup process
-        (Dial, DialHTTP, Accept, HandleHTTP) by setting NewDefaultCodec function.
-        The default is Gob encoder/decoder (NewGobCodec), a JSON based NewJsonCodec is provided.
+        (Dial, DialHTTP, Accept, HandleHTTP) by setting NewDefaultCodec function. The
+        default is Gob encoder/decoder (NewGobCodec), a JSON based NewJsonCodec is provided.
 
-        rrpc also supports bidirectional rpc over the same connection (DialBiDirection,AcceptBiDirection),
-        where there are servers active at both ends of connection and serving clients at other end.
+        rrpc also supports bidirectional rpc over the same connection (DialBiDirection,
+        AcceptBiDirection, ConnectBiDirectionCodec), where there are servers active at
+        both ends of connection and serving clients at other end.
 */
 package rrpc
 
